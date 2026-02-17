@@ -1,0 +1,41 @@
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+
+# Android
+android/local.properties
+android/.gradle
+android/key.properties
+android/app/google-services.json
+
+# iOS
+ios/.symlinks/
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Pods/
+ios/Runner.xcworkspace/
+
+# Firebase - IMPORTANTE: no subir estos archivos
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
