@@ -5,6 +5,12 @@ import '../../models/app_user.dart';
 import '../login_screen.dart';
 import '../jobs/my_applications_screen.dart';
 import '../jobs/my_job_postings_screen.dart';
+import '../materials/my_materials_screen.dart';
+import 'edit_teacher_profile_screen.dart';
+import 'edit_institution_profile_screen.dart';
+import 'notifications_screen.dart';
+import 'settings_screen.dart';
+import 'help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -27,7 +33,10 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Navigate to settings
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
             },
           ),
         ],
@@ -106,7 +115,21 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.person,
             title: 'Edit Profile',
             onTap: () {
-              // TODO: Navigate to edit profile
+              if (user.userType == UserType.teacher) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const EditTeacherProfileScreen(),
+                  ),
+                );
+              } else if (user.userType == UserType.institution) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const EditInstitutionProfileScreen(),
+                  ),
+                );
+              }
             },
           ),
 
@@ -129,7 +152,12 @@ class ProfileScreen extends StatelessWidget {
               icon: Icons.folder,
               title: 'My Materials',
               onTap: () {
-                // TODO: Navigate to my materials
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MyMaterialsScreen(),
+                  ),
+                );
               },
             ),
           ],
@@ -155,7 +183,12 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.notifications,
             title: 'Notifications',
             onTap: () {
-              // TODO: Navigate to notifications
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsScreen(),
+                ),
+              );
             },
           ),
 
@@ -164,7 +197,12 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.help,
             title: 'Help & Support',
             onTap: () {
-              // TODO: Navigate to help
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const HelpSupportScreen(),
+                ),
+              );
             },
           ),
 

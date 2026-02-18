@@ -8,7 +8,6 @@ import 'firestore_wrapper.dart';
 class JobService {
   final _uuid = const Uuid();
 
-  // Create a new job posting
   Future<String> createJobPosting(JobPosting job) async {
     try {
       DocumentReference docRef =
@@ -21,30 +20,25 @@ class JobService {
     }
   }
 
-  // Get all active job postings
   Stream<List<JobPosting>> getActiveJobs() {
     Query query = FirestoreWrapper.query('jobs')
         .where('status', isEqualTo: 'active')
         .orderBy('postedAt', descending: true);
-
     return FirestoreWrapper.getCollectionStream(query, 'Active jobs').map(
         (snapshot) =>
             snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList());
   }
 
-  // Get jobs posted by a specific institution
   Stream<List<JobPosting>> getJobsByInstitution(String uid) {
     Query query = FirestoreWrapper.query('jobs')
         .where('postedBy', isEqualTo: uid)
         .orderBy('postedAt', descending: true);
-
     return FirestoreWrapper.getCollectionStream(
             query, 'Jobs by institution $uid')
         .map((snapshot) =>
             snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList());
   }
 
-  // Search jobs with filters
   Stream<List<JobPosting>> searchJobs({
     String? location,
     List<AvailabilityShift>? shifts,
@@ -52,11 +46,9 @@ class JobService {
   }) {
     Query query =
         FirestoreWrapper.query('jobs').where('status', isEqualTo: 'active');
-
     if (location != null && location.isNotEmpty) {
       query = query.where('location', isEqualTo: location);
     }
-
     return query
         .orderBy('postedAt', descending: true)
         .snapshots()
@@ -66,27 +58,25 @@ class JobService {
     }).map((snapshot) {
       List<JobPosting> jobs =
           snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList();
-
-      // Filter by shifts and levels in-memory
       if (shifts != null && shifts.isNotEmpty) {
         jobs = jobs
             .where((job) => job.shifts.any((shift) => shifts.contains(shift)))
             .toList();
       }
-
       if (levels != null && levels.isNotEmpty) {
         jobs = jobs
             .where((job) => job.levels.any((level) => levels.contains(level)))
             .toList();
       }
-
       return jobs;
     });
   }
 
-  // Apply to a job
+  // Apply to a job — ahora recibe jobTitle e institutionName
   Future<void> applyToJob({
     required String jobId,
+    required String jobTitle,
+    required String institutionName,
     required String teacherId,
     required String teacherName,
     String? teacherEmail,
@@ -94,20 +84,18 @@ class JobService {
     String? coverLetter,
   }) async {
     try {
-      // Check if already applied
       QuerySnapshot existing = await FirestoreWrapper.query('applications')
           .where('jobId', isEqualTo: jobId)
           .where('teacherId', isEqualTo: teacherId)
           .get();
-
       if (existing.docs.isNotEmpty) {
         throw Exception('Already applied to this job');
       }
-
-      // Create application
       JobApplication application = JobApplication(
         id: _uuid.v4(),
         jobId: jobId,
+        jobTitle: jobTitle,
+        institutionName: institutionName,
         teacherId: teacherId,
         teacherName: teacherName,
         teacherEmail: teacherEmail,
@@ -115,11 +103,7 @@ class JobService {
         coverLetter: coverLetter,
         appliedAt: DateTime.now(),
       );
-
-      // Add application to Firestore
       await FirestoreWrapper.addDocument('applications', application.toMap());
-
-      // Increment application count on job
       await FirestoreWrapper.updateDocument('jobs', jobId, {
         'applicationsCount': FieldValue.increment(1),
       });
@@ -130,12 +114,10 @@ class JobService {
     }
   }
 
-  // Get applications for a specific job
   Stream<List<JobApplication>> getApplicationsForJob(String jobId) {
     Query query = FirestoreWrapper.query('applications')
         .where('jobId', isEqualTo: jobId)
         .orderBy('appliedAt', descending: true);
-
     return FirestoreWrapper.getCollectionStream(
             query, 'Applications for job $jobId')
         .map((snapshot) => snapshot.docs
@@ -143,12 +125,10 @@ class JobService {
             .toList());
   }
 
-  // Get applications submitted by a teacher
   Stream<List<JobApplication>> getApplicationsByTeacher(String teacherId) {
     Query query = FirestoreWrapper.query('applications')
         .where('teacherId', isEqualTo: teacherId)
         .orderBy('appliedAt', descending: true);
-
     return FirestoreWrapper.getCollectionStream(
             query, 'Applications by teacher $teacherId')
         .map((snapshot) => snapshot.docs
@@ -156,7 +136,6 @@ class JobService {
             .toList());
   }
 
-  // Update application status
   Future<void> updateApplicationStatus({
     required String applicationId,
     required ApplicationStatus status,
@@ -166,11 +145,7 @@ class JobService {
       Map<String, dynamic> updates = {
         'status': status.toString().split('.').last,
       };
-
-      if (notes != null) {
-        updates['institutionNotes'] = notes;
-      }
-
+      if (notes != null) updates['institutionNotes'] = notes;
       await FirestoreWrapper.updateDocument(
           'applications', applicationId, updates);
     } catch (e, stackTrace) {
@@ -180,7 +155,6 @@ class JobService {
     }
   }
 
-  // Update job status
   Future<void> updateJobStatus(String jobId, JobStatus status) async {
     try {
       await FirestoreWrapper.updateDocument('jobs', jobId, {
@@ -193,16 +167,12 @@ class JobService {
     }
   }
 
-  // Delete job posting
   Future<void> deleteJob(String jobId) async {
     try {
       await FirestoreWrapper.deleteDocument('jobs', jobId);
-
-      // Optionally delete associated applications
       QuerySnapshot applications = await FirestoreWrapper.query('applications')
           .where('jobId', isEqualTo: jobId)
           .get();
-
       for (var doc in applications.docs) {
         await FirestoreWrapper.deleteDocument('applications', doc.id);
       }

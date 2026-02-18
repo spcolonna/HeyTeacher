@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../models/teaching_material.dart';
 import '../../models/teacher_profile.dart';
+import '../../models/app_user.dart';
 import '../../services/material_service.dart';
+import '../../providers/auth_provider.dart';
+import 'upload_material_screen.dart';
+import 'material_detail_screen.dart';
 
 class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({super.key});
+  const MaterialsScreen({Key? key}) : super(key: key);
 
   @override
   State<MaterialsScreen> createState() => _MaterialsScreenState();
@@ -16,9 +21,25 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Teacher's Toolbox"),
+        actions: [
+          if (user?.userType == UserType.teacher)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UploadMaterialScreen(),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -36,7 +57,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     _getCategoryLabel(category),
                     category,
                   );
-                }),
+                }).toList(),
               ],
             ),
           ),
@@ -63,19 +84,29 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.folder_off,
-                          size: 64,
-                          color: Colors.grey.shade400,
-                        ),
+                        Icon(Icons.folder_off,
+                            size: 64, color: Colors.grey.shade400),
                         const SizedBox(height: 16),
                         Text(
                           'No materials available',
                           style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey.shade600,
-                          ),
+                              fontSize: 18, color: Colors.grey.shade600),
                         ),
+                        if (user?.userType == UserType.teacher) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const UploadMaterialScreen(),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.upload),
+                            label: const Text('Upload First Material'),
+                          ),
+                        ],
                       ],
                     ),
                   );
@@ -92,7 +123,18 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   itemCount: materials.length,
                   itemBuilder: (context, index) {
                     final material = materials[index];
-                    return MaterialCard(material: material);
+                    return MaterialCard(
+                      material: material,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                MaterialDetailScreen(material: material),
+                          ),
+                        );
+                      },
+                    );
                   },
                 );
               },
@@ -139,17 +181,17 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
 
 class MaterialCard extends StatelessWidget {
   final TeachingMaterial material;
+  final VoidCallback onTap;
 
-  const MaterialCard({super.key, required this.material});
+  const MaterialCard({Key? key, required this.material, required this.onTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          // TODO: Show material detail
-        },
+        onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

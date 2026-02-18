@@ -5,6 +5,8 @@ enum ApplicationStatus { pending, reviewed, accepted, rejected }
 class JobApplication {
   final String id;
   final String jobId;
+  final String jobTitle;
+  final String institutionName;
   final String teacherId;
   final String teacherName;
   final String? teacherEmail;
@@ -13,10 +15,12 @@ class JobApplication {
   final DateTime appliedAt;
   final ApplicationStatus status;
   final String? institutionNotes;
-  
+
   JobApplication({
     required this.id,
     required this.jobId,
+    required this.jobTitle,
+    required this.institutionName,
     required this.teacherId,
     required this.teacherName,
     this.teacherEmail,
@@ -26,12 +30,14 @@ class JobApplication {
     this.status = ApplicationStatus.pending,
     this.institutionNotes,
   });
-  
+
   factory JobApplication.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return JobApplication(
       id: doc.id,
       jobId: data['jobId'] ?? '',
+      jobTitle: data['jobTitle'] ?? 'Unknown Job',
+      institutionName: data['institutionName'] ?? '',
       teacherId: data['teacherId'] ?? '',
       teacherName: data['teacherName'] ?? '',
       teacherEmail: data['teacherEmail'],
@@ -45,10 +51,12 @@ class JobApplication {
       institutionNotes: data['institutionNotes'],
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'jobId': jobId,
+      'jobTitle': jobTitle,
+      'institutionName': institutionName,
       'teacherId': teacherId,
       'teacherName': teacherName,
       'teacherEmail': teacherEmail,

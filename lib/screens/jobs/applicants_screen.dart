@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/job_posting.dart';
 import '../../models/job_application.dart';
 import '../../services/job_service.dart';
+import 'teacher_profile_detail_screen.dart';
 
 class ApplicantsScreen extends StatelessWidget {
   final JobPosting job;
@@ -33,7 +34,6 @@ class ApplicantsScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
@@ -64,6 +64,15 @@ class ApplicantsScreen extends StatelessWidget {
               final app = applications[index];
               return _ApplicantCard(
                 application: app,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          TeacherProfileDetailScreen(application: app),
+                    ),
+                  );
+                },
                 onStatusChanged: (status, notes) async {
                   await jobService.updateApplicationStatus(
                     applicationId: app.id,
@@ -82,11 +91,13 @@ class ApplicantsScreen extends StatelessWidget {
 
 class _ApplicantCard extends StatelessWidget {
   final JobApplication application;
+  final VoidCallback onTap;
   final Function(ApplicationStatus, String?) onStatusChanged;
 
   const _ApplicantCard({
     Key? key,
     required this.application,
+    required this.onTap,
     required this.onStatusChanged,
   }) : super(key: key);
 
@@ -138,9 +149,7 @@ class _ApplicantCard extends StatelessWidget {
                   title: Text(_getStatusLabel(status)),
                   value: status,
                   groupValue: selectedStatus,
-                  onChanged: (value) {
-                    setState(() => selectedStatus = value!);
-                  },
+                  onChanged: (value) => setState(() => selectedStatus = value!),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 );
@@ -153,7 +162,7 @@ class _ApplicantCard extends StatelessWidget {
                 controller: notesController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'Add a note for this applicant...',
+                  hintText: 'Add a note...',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -185,116 +194,101 @@ class _ApplicantCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  child: Text(
-                    application.teacherName.isNotEmpty
-                        ? application.teacherName[0].toUpperCase()
-                        : 'T',
-                    style: TextStyle(
-                      color: Colors.blue.shade700,
-                      fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.blue.shade100,
+                    child: Text(
+                      application.teacherName.isNotEmpty
+                          ? application.teacherName[0].toUpperCase()
+                          : 'T',
+                      style: TextStyle(
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        application.teacherName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      if (application.teacherEmail != null)
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          application.teacherEmail!,
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 13,
+                          application.teacherName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
                           ),
                         ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor),
-                  ),
-                  child: Text(
-                    _getStatusLabel(application.status),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                        if (application.teacherEmail != null)
+                          Text(
+                            application.teacherEmail!,
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.calendar_today,
-                    size: 13, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormat('MMM dd, yyyy').format(application.appliedAt),
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                ),
-              ],
-            ),
-            if (application.institutionNotes != null &&
-                application.institutionNotes!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.note, size: 14, color: Colors.grey.shade600),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        application.institutionNotes!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade700,
-                          fontStyle: FontStyle.italic,
-                        ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: statusColor),
+                    ),
+                    child: Text(
+                      _getStatusLabel(application.status),
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today,
+                      size: 13, color: Colors.grey.shade500),
+                  const SizedBox(width: 4),
+                  Text(
+                    DateFormat('MMM dd, yyyy').format(application.appliedAt),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Tap to see profile →',
+                    style: TextStyle(color: Colors.blue.shade400, fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showUpdateStatusDialog(context),
+                  icon: const Icon(Icons.edit, size: 15),
+                  label: const Text('Update Status'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => _showUpdateStatusDialog(context),
-                icon: const Icon(Icons.edit, size: 16),
-                label: const Text('Update Status'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

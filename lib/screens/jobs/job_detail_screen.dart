@@ -9,7 +9,7 @@ import '../../services/job_service.dart';
 class JobDetailScreen extends StatefulWidget {
   final JobPosting job;
 
-  const JobDetailScreen({super.key, required this.job});
+  const JobDetailScreen({Key? key, required this.job}) : super(key: key);
 
   @override
   State<JobDetailScreen> createState() => _JobDetailScreenState();
@@ -22,34 +22,30 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
   Future<void> _applyToJob() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
-
     if (user == null) return;
 
-    setState(() {
-      _isApplying = true;
-    });
+    setState(() => _isApplying = true);
 
     try {
       await _jobService.applyToJob(
         jobId: widget.job.id,
+        jobTitle: widget.job.jobTitle,
+        institutionName: widget.job.institutionName,
         teacherId: user.uid,
         teacherName: user.displayName,
         teacherEmail: user.email,
       );
 
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Application submitted successfully!'),
           backgroundColor: Colors.green,
         ),
       );
-
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().contains('Already applied')
@@ -59,11 +55,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isApplying = false;
-        });
-      }
+      if (mounted) setState(() => _isApplying = false);
     }
   }
 
@@ -74,9 +66,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     final isTeacher = user?.userType == UserType.teacher;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Job Details'),
-      ),
+      appBar: AppBar(title: const Text('Job Details')),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -103,15 +93,13 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                   const SizedBox(height: 8),
                   Text(
                     widget.job.institutionName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.white70,
-                    ),
+                    style: const TextStyle(fontSize: 18, color: Colors.white70),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.location_on, color: Colors.white, size: 20),
+                      const Icon(Icons.location_on,
+                          color: Colors.white, size: 20),
                       const SizedBox(width: 4),
                       Text(
                         widget.job.location,
@@ -129,28 +117,24 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Description
                   const Text(
                     'Description',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    widget.job.description,
-                    style: const TextStyle(fontSize: 16),
-                  ),
+                  Text(widget.job.description,
+                      style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 24),
-
-                  // Details grid
-                  _buildDetailRow('Shifts', widget.job.shifts
-                      .map((s) => s.toString().split('.').last)
-                      .join(', ')),
-                  _buildDetailRow('Levels', widget.job.levels
-                      .map((l) => l.toString().split('.').last)
-                      .join(', ')),
+                  _buildDetailRow(
+                      'Shifts',
+                      widget.job.shifts
+                          .map((s) => s.toString().split('.').last)
+                          .join(', ')),
+                  _buildDetailRow(
+                      'Levels',
+                      widget.job.levels
+                          .map((l) => l.toString().split('.').last)
+                          .join(', ')),
                   if (widget.job.hoursPerWeek != null)
                     _buildDetailRow(
                         'Hours per week', '${widget.job.hoursPerWeek}'),
@@ -160,7 +144,8 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                     _buildDetailRow(
                       'Required Certifications',
                       widget.job.requiredCertifications
-                          .map((c) => c.toString().split('.').last.toUpperCase())
+                          .map(
+                              (c) => c.toString().split('.').last.toUpperCase())
                           .join(', '),
                     ),
                   const SizedBox(height: 16),
@@ -196,14 +181,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
+                              strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text(
-                          'Apply Now',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                      : const Text('Apply Now', style: TextStyle(fontSize: 16)),
                 ),
               ),
             )
@@ -228,10 +208,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
+            child: Text(value, style: const TextStyle(fontSize: 16)),
           ),
         ],
       ),

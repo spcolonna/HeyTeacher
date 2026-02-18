@@ -14,16 +14,13 @@ class MyApplicationsScreen extends StatelessWidget {
     final JobService jobService = JobService();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Applications'),
-      ),
+      appBar: AppBar(title: const Text('My Applications')),
       body: StreamBuilder<List<JobApplication>>(
         stream: jobService.getApplicationsByTeacher(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
@@ -55,8 +52,7 @@ class MyApplicationsScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             itemCount: applications.length,
             itemBuilder: (context, index) {
-              final app = applications[index];
-              return _ApplicationCard(application: app);
+              return _ApplicationCard(application: applications[index]);
             },
           );
         },
@@ -124,14 +120,31 @@ class _ApplicationCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    application.jobId,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Nombre del job
+                      Text(
+                        application.jobTitle,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      // Nombre de la institución
+                      Text(
+                        application.institutionName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Badge de estado
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -144,7 +157,7 @@ class _ApplicationCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(_getStatusIcon(application.status),
-                          size: 14, color: statusColor),
+                          size: 13, color: statusColor),
                       const SizedBox(width: 4),
                       Text(
                         _getStatusLabel(application.status),
@@ -163,7 +176,7 @@ class _ApplicationCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.calendar_today,
-                    size: 14, color: Colors.grey.shade600),
+                    size: 13, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
                 Text(
                   'Applied: ${DateFormat('MMM dd, yyyy').format(application.appliedAt)}',
@@ -171,27 +184,35 @@ class _ApplicationCard extends StatelessWidget {
                 ),
               ],
             ),
+            // Notas de la institución si las hay
             if (application.institutionNotes != null &&
                 application.institutionNotes!.isNotEmpty) ...[
               const SizedBox(height: 8),
               const Divider(),
               const SizedBox(height: 4),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.message, size: 14, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      application.institutionNotes!,
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.message, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        application.institutionNotes!,
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ],
