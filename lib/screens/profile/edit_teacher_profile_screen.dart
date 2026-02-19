@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'manage_documents_screen.dart';
 
 class EditTeacherProfileScreen extends StatefulWidget {
   const EditTeacherProfileScreen({Key? key}) : super(key: key);
@@ -151,10 +152,10 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black),
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Text('Save',
-                    style: TextStyle(color: Colors.black, fontSize: 16)),
+                    style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         ],
       ),
@@ -163,6 +164,57 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // Card para gestionar documentos
+            Card(
+              color: Colors.blue.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.folder_open, color: Colors.blue.shade700),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'CV & Certifications',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Upload your CV and teaching certifications to stand out to institutions.',
+                      style:
+                          TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ManageDocumentsScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Manage Documents'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
@@ -173,6 +225,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
+
             TextFormField(
               controller: _phoneController,
               decoration: InputDecoration(
@@ -183,6 +236,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
+
             TextFormField(
               controller: _bioController,
               maxLines: 3,
@@ -194,6 +248,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             TextFormField(
               controller: _locationController,
               decoration: InputDecoration(
@@ -204,6 +259,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             TextFormField(
               controller: _yearsController,
               keyboardType: TextInputType.number,
@@ -214,6 +270,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               ),
             ),
             const SizedBox(height: 24),
+
             const Text('Certifications',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
@@ -236,6 +293,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               }).toList(),
             ),
             const SizedBox(height: 24),
+
             const Text('Availability',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),
@@ -258,6 +316,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               }).toList(),
             ),
             const SizedBox(height: 24),
+
             const Text('Preferred Levels',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             const SizedBox(height: 8),

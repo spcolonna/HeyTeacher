@@ -4,10 +4,12 @@ import '../providers/auth_provider.dart';
 import '../models/app_user.dart';
 import 'jobs/jobs_screen.dart';
 import 'materials/materials_screen.dart';
+import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
+import '../widgets/sponsor_banner.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -30,15 +32,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> screens = [
       const JobsScreen(),
       const MaterialsScreen(),
+      const MarketplaceScreen(),
       const ProfileScreen(),
     ];
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
+      body: Column(
+        children: [
+          // Banner de sponsors (solo visible en las primeras 2 tabs)
+          if (_selectedIndex < 2) const SponsorBanner(),
+
+          // Contenido principal
+          Expanded(
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: screens,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
@@ -53,6 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.folder),
             label: 'Materials',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.card_giftcard),
+            label: 'Benefits',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

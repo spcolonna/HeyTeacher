@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../../providers/auth_provider.dart';
 import '../../models/teaching_material.dart';
 import '../../models/teacher_profile.dart';
@@ -26,8 +28,13 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
 
   MaterialCategory _selectedCategory = MaterialCategory.lessonPlan;
   List<TeachingLevel> _selectedLevels = [];
+
+  // Para móvil
   File? _selectedFile;
+  // Para web
+  Uint8List? _selectedFileBytes;
   String? _fileName;
+
   bool _isUploading = false;
 
   @override
@@ -43,26 +50,50 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'jpg', 'png'],
+        withData: kIsWeb, // Solo cargar bytes en web
       );
 
       if (result != null) {
         setState(() {
-          _selectedFile = File(result.files.single.path!);
           _fileName = result.files.single.name;
+          if (kIsWeb) {
+            _selectedFileBytes = result.files.single.bytes;
+          } else {
+            _selectedFile = File(result.files.single.path!);
+          }
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Error picking file: $e'),
-            backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error picking file: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   Future<void> _uploadMaterial() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedFile == null) {
+
+    if (_fileName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please select a file'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (kIsWeb && _selectedFileBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Please select a file'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (!kIsWeb && _selectedFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please select a file'), backgroundColor: Colors.red),
@@ -76,9 +107,13 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
     setState(() => _isUploading = true);
 
     try {
-      // Upload file
+      // Upload file - funciona tanto en web como en móvil
       String fileUrl = await _storageService.uploadTeachingMaterial(
-          _selectedFile!, user.uid);
+        file: _selectedFile,
+        bytes: _selectedFileBytes,
+        userId: user.uid,
+        originalFileName: _fileName!,
+      );
 
       // Parse tags
       List<String> tags = _tagsController.text

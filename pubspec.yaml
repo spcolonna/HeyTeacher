@@ -32,6 +32,7 @@ dependencies:
   file_picker: ^8.1.2
   image_picker: ^1.1.2
   url_launcher: ^6.2.2
+  qr_flutter: ^4.1.0
   
   # Local Storage
   shared_preferences: ^2.2.2

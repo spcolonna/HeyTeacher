@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/app_user.dart';
 import 'home_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+  const SignUpScreen({Key? key}) : super(key: key);
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -15,9 +16,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   UserType _selectedUserType = UserType.teacher;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -26,21 +28,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Phone number is required';
+    }
+
+    // Remover espacios y caracteres especiales
+    String cleaned = value.replaceAll(RegExp(r'[^\d+]'), '');
+
+    // Debe tener al menos 8 dígitos
+    if (cleaned.length < 8) {
+      return 'Phone number must have at least 8 digits';
+    }
+
+    return null;
   }
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
+    // Limpiar el teléfono antes de enviarlo
+    String cleanedPhone =
+        _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
+
     bool success = await authProvider.signUp(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       displayName: _nameController.text.trim(),
       userType: _selectedUserType,
+      phone: cleanedPhone,
     );
 
     if (!mounted) return;
@@ -74,112 +98,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 24),
-                
+
                 // User type selection
                 const Text(
                   'I am a:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 12),
-                
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedUserType = UserType.teacher;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _selectedUserType == UserType.teacher
-                                ? Colors.blue.shade100
-                                : Colors.grey.shade100,
-                            border: Border.all(
-                              color: _selectedUserType == UserType.teacher
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.person,
-                                size: 40,
-                                color: _selectedUserType == UserType.teacher
-                                    ? Colors.blue
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Teacher',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                const SizedBox(height: 8),
+                SegmentedButton<UserType>(
+                  segments: const [
+                    ButtonSegment<UserType>(
+                      value: UserType.teacher,
+                      label: Text('Teacher'),
+                      icon: Icon(Icons.school),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _selectedUserType = UserType.institution;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _selectedUserType == UserType.institution
-                                ? Colors.purple.shade100
-                                : Colors.grey.shade100,
-                            border: Border.all(
-                              color: _selectedUserType == UserType.institution
-                                  ? Colors.purple
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.school,
-                                size: 40,
-                                color: _selectedUserType == UserType.institution
-                                    ? Colors.purple
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Institution',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    ButtonSegment<UserType>(
+                      value: UserType.institution,
+                      label: Text('Institution'),
+                      icon: Icon(Icons.business),
                     ),
                   ],
+                  selected: {_selectedUserType},
+                  onSelectionChanged: (Set<UserType> selection) {
+                    setState(() {
+                      _selectedUserType = selection.first;
+                    });
+                  },
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Name field
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: _selectedUserType == UserType.teacher
-                        ? 'Full Name'
-                        : 'Institution Name',
-                    prefixIcon: const Icon(Icons.badge),
+                        ? 'Full Name *'
+                        : 'Institution Name *',
+                    prefixIcon: const Icon(Icons.person),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -192,13 +147,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Email field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'Email *',
                     prefixIcon: const Icon(Icons.email),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -215,17 +170,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
+                // Phone field (NEW - REQUIRED)
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                        RegExp(r'[\d\s\+\-\(\)]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number *',
+                    hintText: '+598 99 123 456',
+                    prefixIcon: const Icon(Icons.phone),
+                    helperText: 'Required for WhatsApp notifications',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: _validatePhone,
+                ),
+                const SizedBox(height: 16),
+
                 // Password field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Password *',
                     prefixIcon: const Icon(Icons.lock),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
                       onPressed: () {
                         setState(() {
@@ -248,13 +226,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
-                // Confirm password field
+
+                // Confirm Password field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: 'Confirm Password *',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -282,8 +260,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
-                
+                const SizedBox(height: 24),
+
+                // Info box about WhatsApp
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline,
+                          color: Colors.green.shade700, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'We\'ll use WhatsApp to send you job alerts and important updates',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
                 // Sign up button
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, _) {
@@ -312,17 +317,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
-                // Back to login
+
+                // Login link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text('Already have an account?'),
                     TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Login'),
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Log In'),
                     ),
                   ],
                 ),
