@@ -5,20 +5,20 @@ import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   AppUser? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
-  
+
   AppUser? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
-  
+
   AuthProvider() {
     _initializeAuthListener();
   }
-  
+
   void _initializeAuthListener() {
     _authService.userStream.listen((User? firebaseUser) async {
       if (firebaseUser != null) {
@@ -29,16 +29,17 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     });
   }
-  
+
   Future<bool> signUp({
     required String email,
     required String password,
     required String displayName,
     required UserType userType,
+    required String phone,
   }) async {
     _setLoading(true);
     _errorMessage = null;
-    
+
     try {
       _currentUser = await _authService.signUpWithEmail(
         email: email,
@@ -46,7 +47,7 @@ class AuthProvider extends ChangeNotifier {
         displayName: displayName,
         userType: userType,
       );
-      
+
       _setLoading(false);
       return _currentUser != null;
     } on FirebaseAuthException catch (e) {
@@ -59,20 +60,20 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<bool> signIn({
     required String email,
     required String password,
   }) async {
     _setLoading(true);
     _errorMessage = null;
-    
+
     try {
       _currentUser = await _authService.signInWithEmail(
         email: email,
         password: password,
       );
-      
+
       _setLoading(false);
       return _currentUser != null;
     } on FirebaseAuthException catch (e) {
@@ -85,7 +86,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<void> signOut() async {
     _setLoading(true);
     try {
@@ -97,11 +98,11 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   Future<bool> resetPassword(String email) async {
     _setLoading(true);
     _errorMessage = null;
-    
+
     try {
       await _authService.resetPassword(email);
       _setLoading(false);
@@ -116,7 +117,7 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
-  
+
   Future<void> updateProfile({String? displayName, String? photoUrl}) async {
     _setLoading(true);
     try {
@@ -124,7 +125,7 @@ class AuthProvider extends ChangeNotifier {
         displayName: displayName,
         photoUrl: photoUrl,
       );
-      
+
       // Refresh current user data
       if (_currentUser != null) {
         _currentUser = await _authService.getUserData(_currentUser!.uid);
@@ -135,17 +136,17 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
-  
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
-  
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
   }
-  
+
   String _getAuthErrorMessage(String code) {
     switch (code) {
       case 'weak-password':

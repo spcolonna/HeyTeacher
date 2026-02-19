@@ -104,26 +104,126 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   'I am a:',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
-                SegmentedButton<UserType>(
-                  segments: const [
-                    ButtonSegment<UserType>(
-                      value: UserType.teacher,
-                      label: Text('Teacher'),
-                      icon: Icon(Icons.school),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    // Teacher option
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedUserType = UserType.teacher;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _selectedUserType == UserType.teacher
+                                ? Colors.blue.shade50
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedUserType == UserType.teacher
+                                  ? Colors.blue
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.school,
+                                size: 48,
+                                color: _selectedUserType == UserType.teacher
+                                    ? Colors.blue
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Teacher',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: _selectedUserType == UserType.teacher
+                                      ? Colors.blue
+                                      : Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Find jobs & access teaching materials',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    ButtonSegment<UserType>(
-                      value: UserType.institution,
-                      label: Text('Institution'),
-                      icon: Icon(Icons.business),
+                    const SizedBox(width: 12),
+
+                    // Institution option
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedUserType = UserType.institution;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: _selectedUserType == UserType.institution
+                                ? Colors.purple.shade50
+                                : Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedUserType == UserType.institution
+                                  ? Colors.purple
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.business,
+                                size: 48,
+                                color: _selectedUserType == UserType.institution
+                                    ? Colors.purple
+                                    : Colors.grey,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Institution',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      _selectedUserType == UserType.institution
+                                          ? Colors.purple
+                                          : Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Post jobs & find qualified teachers',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ],
-                  selected: {_selectedUserType},
-                  onSelectionChanged: (Set<UserType> selection) {
-                    setState(() {
-                      _selectedUserType = selection.first;
-                    });
-                  },
                 ),
                 const SizedBox(height: 24),
 

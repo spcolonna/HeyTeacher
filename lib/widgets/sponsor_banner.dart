@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hey_teacher_app/screens/marketplace/marketplace_screen.dart';
 import 'dart:async';
 import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
-import '../marketplace/marketplace_screen.dart';
 
 class SponsorBanner extends StatefulWidget {
   const SponsorBanner({Key? key}) : super(key: key);
@@ -60,7 +60,7 @@ class _SponsorBannerState extends State<SponsorBanner> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
-            height: 120,
+            height: 130,
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
@@ -78,7 +78,7 @@ class _SponsorBannerState extends State<SponsorBanner> {
         }
 
         return Container(
-          height: 120,
+          height: 130,
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: PageView.builder(
             controller: _pageController,
@@ -231,7 +231,7 @@ class _DefaultBanner extends StatelessWidget {
         );
       },
       child: Container(
-        height: 120,
+        height: 130,
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
