@@ -7,37 +7,47 @@ class NotificationService {
   
   // Initialize notifications
   Future<void> initialize() async {
-    // Request permission
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
-    
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-      
-      // Get FCM token
-      String? token = await _messaging.getToken();
-      if (token != null) {
-        print('FCM Token: $token');
-        // Save token to Firestore would happen here
+    try {
+      // Request permission
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        print('User granted permission');
+
+        // Get FCM token
+        try {
+          String? token = await _messaging.getToken();
+          if (token != null) {
+            print('FCM Token: $token');
+            // Save token to Firestore would happen here
+          }
+        } catch (e) {
+          print('⚠️ Could not get FCM token (normal on iOS simulator): $e');
+          // Continuar sin token - OK en simulador
+        }
+
+        // Listen for token refresh
+        _messaging.onTokenRefresh.listen((newToken) async {
+          print('FCM Token refreshed: $newToken');
+          // Update token in Firestore
+        });
+
+        // Handle foreground messages
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+        // Handle background messages
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
+      } else {
+        print('User declined or has not granted permission');
       }
-      
-      // Listen for token refresh
-      _messaging.onTokenRefresh.listen((newToken) async {
-        print('FCM Token refreshed: $newToken');
-        // Update token in Firestore
-      });
-      
-      // Handle foreground messages
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-      
-      // Handle background messages
-      FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundMessage);
-    } else {
-      print('User declined or has not granted permission');
+    } catch (e) {
+      print('⚠️ Notification initialization failed (may be running on simulator): $e');
+      // App continúa funcionando sin notificaciones
     }
   }
   
