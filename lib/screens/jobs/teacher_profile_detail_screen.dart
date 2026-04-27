@@ -8,8 +8,7 @@ import '../../services/firestore_wrapper.dart';
 class TeacherProfileDetailScreen extends StatefulWidget {
   final JobApplication application;
 
-  const TeacherProfileDetailScreen({Key? key, required this.application})
-      : super(key: key);
+  const TeacherProfileDetailScreen({super.key, required this.application});
 
   @override
   State<TeacherProfileDetailScreen> createState() =>
@@ -92,7 +91,7 @@ class _TeacherProfileDetailScreenState
   void _showUpdateStatusDialog(BuildContext context, JobService jobService) {
     ApplicationStatus selectedStatus = widget.application.status;
     final notesController =
-    TextEditingController(text: widget.application.institutionNotes);
+        TextEditingController(text: widget.application.institutionNotes);
 
     showDialog(
       context: context,
@@ -108,14 +107,14 @@ class _TeacherProfileDetailScreenState
               const SizedBox(height: 8),
               ...ApplicationStatus.values.map((status) {
                 return RadioListTile<ApplicationStatus>(
-                  title: Text(status.toString().split('.').last),  // ← CORREGIDO
+                  title: Text(status.toString().split('.').last), // ← CORREGIDO
                   value: status,
                   groupValue: selectedStatus,
                   onChanged: (value) => setState(() => selectedStatus = value!),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 8),
               const Text('Notes:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
@@ -214,28 +213,33 @@ class _TeacherProfileDetailScreenState
                       backgroundColor: Colors.white,
                       child: widget.application.teacherPhotoUrl != null
                           ? ClipOval(
-                        child: Image.network(
-                          widget.application.teacherPhotoUrl!,
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderAvatar();
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                    : null,
-                                color: Colors.blue.shade700,
+                              child: Image.network(
+                                widget.application.teacherPhotoUrl!,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return _buildPlaceholderAvatar();
+                                },
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
-                      )
+                            )
                           : _buildPlaceholderAvatar(),
                     ),
                   ),
@@ -253,7 +257,7 @@ class _TeacherProfileDetailScreenState
                     Text(
                       widget.application.teacherEmail!,
                       style:
-                      const TextStyle(color: Colors.white70, fontSize: 14),
+                          const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -268,7 +272,7 @@ class _TeacherProfileDetailScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Aplicó para
-                  _SectionTitle('Applied for'),
+                  const _SectionTitle('Applied for'),
                   _InfoCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +297,7 @@ class _TeacherProfileDetailScreenState
 
                   // Perfil del teacher si existe
                   if (_teacherProfile != null) ...[
-                    _SectionTitle('Profile Information'),
+                    const _SectionTitle('Profile Information'),
                     _InfoCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,7 +317,7 @@ class _TeacherProfileDetailScreenState
                     ),
                     const SizedBox(height: 20),
                     if (_teacherProfile!.certifications.isNotEmpty) ...[
-                      _SectionTitle('Certifications'),
+                      const _SectionTitle('Certifications'),
                       _InfoCard(
                         child: Wrap(
                           spacing: 8,
@@ -329,7 +333,7 @@ class _TeacherProfileDetailScreenState
                       const SizedBox(height: 20),
                     ],
                     if (_teacherProfile!.availability.isNotEmpty) ...[
-                      _SectionTitle('Availability'),
+                      const _SectionTitle('Availability'),
                       _InfoCard(
                         child: Wrap(
                           spacing: 8,
@@ -345,13 +349,13 @@ class _TeacherProfileDetailScreenState
                       const SizedBox(height: 20),
                     ],
                     if (_teacherProfile!.preferredLevels.isNotEmpty) ...[
-                      _SectionTitle('Preferred Teaching Levels'),
+                      const _SectionTitle('Preferred Teaching Levels'),
                       _InfoCard(
                         child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
                           children:
-                          _teacherProfile!.preferredLevels.map((level) {
+                              _teacherProfile!.preferredLevels.map((level) {
                             return Chip(
                               label: Text(_getLevelLabel(level)),
                               backgroundColor: Colors.purple.shade50,
@@ -382,7 +386,7 @@ class _TeacherProfileDetailScreenState
                   // Notas de la institución si las hay
                   if (widget.application.institutionNotes != null &&
                       widget.application.institutionNotes!.isNotEmpty) ...[
-                    _SectionTitle('Your Notes'),
+                    const _SectionTitle('Your Notes'),
                     _InfoCard(
                       child: Text(
                         widget.application.institutionNotes!,
@@ -395,7 +399,7 @@ class _TeacherProfileDetailScreenState
                   // Cover letter si la hay
                   if (widget.application.coverLetter != null &&
                       widget.application.coverLetter!.isNotEmpty) ...[
-                    _SectionTitle('Cover Letter'),
+                    const _SectionTitle('Cover Letter'),
                     _InfoCard(
                       child: Text(widget.application.coverLetter!),
                     ),
@@ -404,7 +408,7 @@ class _TeacherProfileDetailScreenState
 
                   // CV link si lo tiene
                   if (widget.application.cvUrl != null) ...[
-                    _SectionTitle('CV'),
+                    const _SectionTitle('CV'),
                     _InfoCard(
                       child: Row(
                         children: [

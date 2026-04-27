@@ -8,7 +8,7 @@ import 'applicants_screen.dart';
 import 'create_job_screen.dart';
 
 class MyJobPostingsScreen extends StatelessWidget {
-  const MyJobPostingsScreen({Key? key}) : super(key: key);
+  const MyJobPostingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -136,12 +136,12 @@ class _JobPostingCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const _JobPostingCard({
-    Key? key,
+    super.key,
     required this.job,
     required this.onViewApplicants,
     required this.onToggleStatus,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

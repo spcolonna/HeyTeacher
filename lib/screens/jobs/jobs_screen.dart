@@ -9,7 +9,7 @@ import 'job_detail_screen.dart';
 import 'create_job_screen.dart';
 
 class JobsScreen extends StatefulWidget {
-  const JobsScreen({Key? key}) : super(key: key);
+  const JobsScreen({super.key});
 
   @override
   State<JobsScreen> createState() => _JobsScreenState();
@@ -97,12 +97,12 @@ class _JobsScreenState extends State<JobsScreen> {
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _searchText.isNotEmpty
                           ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchText = '');
-                        },
-                      )
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchText = '');
+                              },
+                            )
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -150,10 +150,10 @@ class _JobsScreenState extends State<JobsScreen> {
               stream: user?.userType == UserType.institution
                   ? _jobService.getJobsByInstitution(user!.uid)
                   : _jobService.searchJobs(
-                location: _locationFilter,
-                shifts: _shiftFilters,
-                levels: _levelFilters,
-              ),
+                      location: _locationFilter,
+                      shifts: _shiftFilters,
+                      levels: _levelFilters,
+                    ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -178,8 +178,8 @@ class _JobsScreenState extends State<JobsScreen> {
                           _searchText.isNotEmpty || _locationFilter != null
                               ? 'No jobs found'
                               : user?.userType == UserType.institution
-                              ? 'No jobs posted yet'
-                              : 'No jobs available',
+                                  ? 'No jobs posted yet'
+                                  : 'No jobs available',
                           style: TextStyle(
                               fontSize: 18, color: Colors.grey.shade600),
                         ),
@@ -233,8 +233,7 @@ class JobCard extends StatelessWidget {
   final JobPosting job;
   final VoidCallback onTap;
 
-  const JobCard({Key? key, required this.job, required this.onTap})
-      : super(key: key);
+  const JobCard({super.key, required this.job, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +288,8 @@ class JobCard extends StatelessWidget {
                   Icon(Icons.location_on,
                       size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
-                  Flexible(  // ← AGREGADO: Flexible para location
+                  Flexible(
+                    // ← AGREGADO: Flexible para location
                     child: Text(
                       job.location,
                       style: TextStyle(color: Colors.grey.shade600),
@@ -299,7 +299,8 @@ class JobCard extends StatelessWidget {
                   const SizedBox(width: 16),
                   Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
-                  Flexible(  // ← AGREGADO: Flexible para shifts
+                  Flexible(
+                    // ← AGREGADO: Flexible para shifts
                     child: Text(
                       job.shifts
                           .map((s) => s.toString().split('.').last)
@@ -414,7 +415,7 @@ class _FiltersDialogState extends State<_FiltersDialog> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
               );
-            }).toList(),
+            }),
             const SizedBox(height: 8),
             const Text('Levels:',
                 style: TextStyle(fontWeight: FontWeight.bold)),
@@ -434,7 +435,7 @@ class _FiltersDialogState extends State<_FiltersDialog> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

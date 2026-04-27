@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportScreen extends StatelessWidget {
-  const HelpSupportScreen({Key? key}) : super(key: key);
+  const HelpSupportScreen({super.key});
 
   Future<void> _sendEmail() async {
     final Uri emailUri = Uri(
@@ -25,27 +25,27 @@ class HelpSupportScreen extends StatelessWidget {
       body: ListView(
         children: [
           const _SectionHeader('Common Questions'),
-          _FAQTile(
+          const _FAQTile(
             question: 'How do I apply to a job?',
             answer:
                 'Navigate to the Jobs tab, browse available positions, tap on a job to see details, and click "Apply Now" to submit your application.',
           ),
-          _FAQTile(
+          const _FAQTile(
             question: 'How do I upload teaching materials?',
             answer:
                 'Go to the Materials tab, tap the "+" button in the top right, fill in the details about your material, select a file, and tap "Upload".',
           ),
-          _FAQTile(
+          const _FAQTile(
             question: 'How can I edit my profile?',
             answer:
                 'Go to the Profile tab, tap "Edit Profile", update your information, and tap "Save".',
           ),
-          _FAQTile(
+          const _FAQTile(
             question: 'How do I post a job? (Institutions)',
             answer:
                 'Navigate to the Jobs tab, tap the "+" button, fill in the job details including title, description, shifts, and levels, then tap "Post Job".',
           ),
-          _FAQTile(
+          const _FAQTile(
             question: 'How do I review applications? (Institutions)',
             answer:
                 'Go to Profile → My Job Postings, select a job, tap "Applicants" to see all applications. You can then update the status of each applicant.',

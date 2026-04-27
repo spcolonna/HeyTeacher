@@ -5,7 +5,7 @@ import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
 
 class SponsorBanner extends StatefulWidget {
-  const SponsorBanner({Key? key}) : super(key: key);
+  const SponsorBanner({super.key});
 
   @override
   State<SponsorBanner> createState() => _SponsorBannerState();

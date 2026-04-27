@@ -9,7 +9,7 @@ import '../../services/job_service.dart';
 class JobDetailScreen extends StatefulWidget {
   final JobPosting job;
 
-  const JobDetailScreen({Key? key, required this.job}) : super(key: key);
+  const JobDetailScreen({super.key, required this.job});
 
   @override
   State<JobDetailScreen> createState() => _JobDetailScreenState();

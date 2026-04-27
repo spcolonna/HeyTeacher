@@ -12,7 +12,7 @@ import '../../services/storage_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManageDocumentsScreen extends StatefulWidget {
-  const ManageDocumentsScreen({Key? key}) : super(key: key);
+  const ManageDocumentsScreen({super.key});
 
   @override
   State<ManageDocumentsScreen> createState() => _ManageDocumentsScreenState();
@@ -406,7 +406,7 @@ class _ManageDocumentsScreenState extends State<ManageDocumentsScreen> {
                   onTap: () => _openDocument(certUrl),
                 ),
               );
-            }).toList(),
+            }),
         ],
       ),
     );

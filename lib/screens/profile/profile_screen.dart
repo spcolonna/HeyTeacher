@@ -6,12 +6,12 @@ import '../../models/app_user.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
 import 'edit_teacher_profile_screen.dart';
-import '../jobs/my_job_postings_screen.dart';  // ← CAMBIADO: era jobs_screen.dart
+import '../jobs/my_job_postings_screen.dart'; // ← CAMBIADO: era jobs_screen.dart
 import '../materials/materials_screen.dart';
 import '../login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -35,7 +35,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      DocumentSnapshot doc = await FirestoreWrapper.getDocument('teacher_profiles', user.uid);
+      DocumentSnapshot doc =
+          await FirestoreWrapper.getDocument('teacher_profiles', user.uid);
       if (doc.exists) {
         setState(() {
           _teacherProfile = TeacherProfile.fromFirestore(doc);
@@ -62,7 +63,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     // Usar photoUrl del TeacherProfile si existe, sino null
-    String? photoUrl = user.userType == UserType.teacher ? _teacherProfile?.photoUrl : null;
+    String? photoUrl =
+        user.userType == UserType.teacher ? _teacherProfile?.photoUrl : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -134,7 +136,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () async {
                 await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const EditTeacherProfileScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const EditTeacherProfileScreen()),
                 );
                 // Recargar profile después de editar
                 _loadTeacherProfile();
@@ -146,7 +149,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'My Applications',
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('My Applications - Coming soon')),
+                  const SnackBar(
+                      content: Text('My Applications - Coming soon')),
                 );
               },
             ),
@@ -171,7 +175,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: 'Edit Profile',
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Institution profile editing - Coming soon')),
+                  const SnackBar(
+                      content:
+                          Text('Institution profile editing - Coming soon')),
                 );
               },
             ),
@@ -183,7 +189,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // ← ARREGLADO: ahora va a MyJobPostingsScreen
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const MyJobPostingsScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const MyJobPostingsScreen()),
                 );
               },
             ),
@@ -223,7 +230,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 context: context,
                 applicationName: 'HeyTeacher',
                 applicationVersion: '1.0.2',
-                applicationLegalese: '© 2025 HeyTeacher\nConnecting teachers with opportunities',
+                applicationLegalese:
+                    '© 2025 HeyTeacher\nConnecting teachers with opportunities',
               );
             },
           ),
@@ -258,7 +266,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
+                  (route) => false,
                 );
               }
             },
@@ -289,27 +297,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.white,
         child: photoUrl != null
             ? ClipOval(
-          child: Image.network(
-            photoUrl,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return _buildPlaceholderAvatar(displayName);
-            },
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                      loadingProgress.expectedTotalBytes!
-                      : null,
+                child: Image.network(
+                  photoUrl,
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildPlaceholderAvatar(displayName);
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        )
+              )
             : _buildPlaceholderAvatar(displayName),
       ),
     );
@@ -327,12 +335,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMenuItem(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required VoidCallback onTap,
-        Color? textColor,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? textColor,
+  }) {
     return ListTile(
       leading: Icon(icon, color: textColor),
       title: Text(title, style: TextStyle(color: textColor)),

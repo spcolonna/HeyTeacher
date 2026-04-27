@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -42,39 +42,39 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthAndNavigate() async {
-      print('🔵 SPLASH: Iniciando navegación');
-      
-      // Esperar mínimo 2 segundos para mostrar el splash
-      await Future.delayed(const Duration(seconds: 2));
-      print('🔵 SPLASH: Pasaron 2 segundos');
-      
-      if (!mounted) {
-        print('🔴 SPLASH: Widget no montado, saliendo');
-        return;
-      }
-      print('🔵 SPLASH: Widget montado, obteniendo authProvider');
-      
-      try {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        print('🔵 SPLASH: AuthProvider obtenido');
-        
-        // Verificar si hay usuario autenticado
-        if (authProvider.isAuthenticated) {
-          print('🟢 SPLASH: Usuario autenticado, yendo a Home');
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
-        } else {
-          print('🟡 SPLASH: No autenticado, yendo a Login');
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-        }
-      } catch (e, stackTrace) {
-        print('🔴 SPLASH ERROR: $e');
-        print('🔴 STACK: $stackTrace');
-      }
+    print('🔵 SPLASH: Iniciando navegación');
+
+    // Esperar mínimo 2 segundos para mostrar el splash
+    await Future.delayed(const Duration(seconds: 2));
+    print('🔵 SPLASH: Pasaron 2 segundos');
+
+    if (!mounted) {
+      print('🔴 SPLASH: Widget no montado, saliendo');
+      return;
     }
+    print('🔵 SPLASH: Widget montado, obteniendo authProvider');
+
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      print('🔵 SPLASH: AuthProvider obtenido');
+
+      // Verificar si hay usuario autenticado
+      if (authProvider.isAuthenticated) {
+        print('🟢 SPLASH: Usuario autenticado, yendo a Home');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else {
+        print('🟡 SPLASH: No autenticado, yendo a Login');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
+    } catch (e, stackTrace) {
+      print('🔴 SPLASH ERROR: $e');
+      print('🔴 STACK: $stackTrace');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

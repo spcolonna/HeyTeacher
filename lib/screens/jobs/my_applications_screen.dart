@@ -6,7 +6,7 @@ import '../../models/job_application.dart';
 import '../../services/job_service.dart';
 
 class MyApplicationsScreen extends StatelessWidget {
-  const MyApplicationsScreen({Key? key}) : super(key: key);
+  const MyApplicationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +64,7 @@ class MyApplicationsScreen extends StatelessWidget {
 class _ApplicationCard extends StatelessWidget {
   final JobApplication application;
 
-  const _ApplicationCard({Key? key, required this.application})
-      : super(key: key);
+  const _ApplicationCard({super.key, required this.application});
 
   Color _getStatusColor(ApplicationStatus status) {
     switch (status) {

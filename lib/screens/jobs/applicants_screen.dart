@@ -8,7 +8,7 @@ import 'teacher_profile_detail_screen.dart';
 class ApplicantsScreen extends StatelessWidget {
   final JobPosting job;
 
-  const ApplicantsScreen({Key? key, required this.job}) : super(key: key);
+  const ApplicantsScreen({super.key, required this.job});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,8 @@ class ApplicantsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.grey.shade400),
+                  Icon(Icons.people_outline,
+                      size: 64, color: Colors.grey.shade400),
                   const SizedBox(height: 16),
                   Text(
                     'No applicants yet',
@@ -67,7 +68,8 @@ class ApplicantsScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => TeacherProfileDetailScreen(application: app),
+                      builder: (_) =>
+                          TeacherProfileDetailScreen(application: app),
                     ),
                   );
                 },
@@ -93,33 +95,42 @@ class _ApplicantCard extends StatelessWidget {
   final Function(ApplicationStatus, String?) onStatusChanged;
 
   const _ApplicantCard({
-    Key? key,
+    super.key,
     required this.application,
     required this.onTap,
     required this.onStatusChanged,
-  }) : super(key: key);
+  });
 
   Color _getStatusColor(ApplicationStatus status) {
     switch (status) {
-      case ApplicationStatus.pending:   return Colors.orange;
-      case ApplicationStatus.reviewed:  return Colors.blue;
-      case ApplicationStatus.accepted:  return Colors.green;
-      case ApplicationStatus.rejected:  return Colors.red;
+      case ApplicationStatus.pending:
+        return Colors.orange;
+      case ApplicationStatus.reviewed:
+        return Colors.blue;
+      case ApplicationStatus.accepted:
+        return Colors.green;
+      case ApplicationStatus.rejected:
+        return Colors.red;
     }
   }
 
   String _getStatusLabel(ApplicationStatus status) {
     switch (status) {
-      case ApplicationStatus.pending:   return 'Pending';
-      case ApplicationStatus.reviewed:  return 'Reviewed';
-      case ApplicationStatus.accepted:  return 'Accepted';
-      case ApplicationStatus.rejected:  return 'Rejected';
+      case ApplicationStatus.pending:
+        return 'Pending';
+      case ApplicationStatus.reviewed:
+        return 'Reviewed';
+      case ApplicationStatus.accepted:
+        return 'Accepted';
+      case ApplicationStatus.rejected:
+        return 'Rejected';
     }
   }
 
   void _showUpdateStatusDialog(BuildContext context) {
     ApplicationStatus selectedStatus = application.status;
-    final notesController = TextEditingController(text: application.institutionNotes);
+    final notesController =
+        TextEditingController(text: application.institutionNotes);
 
     showDialog(
       context: context,
@@ -130,7 +141,8 @@ class _ApplicantCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Status:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               ...ApplicationStatus.values.map((status) {
                 return RadioListTile<ApplicationStatus>(
@@ -141,9 +153,10 @@ class _ApplicantCard extends StatelessWidget {
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 8),
-              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Notes:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               TextField(
                 controller: notesController,
@@ -196,13 +209,26 @@ class _ApplicantCard extends StatelessWidget {
                     backgroundColor: Colors.blue.shade100,
                     child: application.teacherPhotoUrl != null
                         ? ClipOval(
-                      child: Image.network(
-                        application.teacherPhotoUrl!,
-                        width: 56,
-                        height: 56,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Text(
+                            child: Image.network(
+                              application.teacherPhotoUrl!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Text(
+                                  application.teacherName.isNotEmpty
+                                      ? application.teacherName[0].toUpperCase()
+                                      : 'T',
+                                  style: TextStyle(
+                                    color: Colors.blue.shade700,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                );
+                              },
+                            ),
+                          )
+                        : Text(
                             application.teacherName.isNotEmpty
                                 ? application.teacherName[0].toUpperCase()
                                 : 'T',
@@ -211,20 +237,7 @@ class _ApplicantCard extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
                             ),
-                          );
-                        },
-                      ),
-                    )
-                        : Text(
-                      application.teacherName.isNotEmpty
-                          ? application.teacherName[0].toUpperCase()
-                          : 'T',
-                      style: TextStyle(
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 24,
-                      ),
-                    ),
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -250,7 +263,8 @@ class _ApplicantCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -270,7 +284,8 @@ class _ApplicantCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.calendar_today, size: 13, color: Colors.grey.shade500),
+                  Icon(Icons.calendar_today,
+                      size: 13, color: Colors.grey.shade500),
                   const SizedBox(width: 4),
                   Text(
                     DateFormat('MMM dd, yyyy').format(application.appliedAt),
