@@ -61,7 +61,7 @@ class _SponsorBannerState extends State<SponsorBanner> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             height: 130,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(12),
@@ -79,7 +79,7 @@ class _SponsorBannerState extends State<SponsorBanner> {
 
         return Container(
           height: 130,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
           child: PageView.builder(
             controller: _pageController,
             itemCount: benefits.length,
@@ -232,7 +232,7 @@ class _DefaultBanner extends StatelessWidget {
       },
       child: Container(
         height: 130,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(

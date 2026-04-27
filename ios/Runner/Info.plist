@@ -66,6 +66,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.854565098615-5bt30kjj3b0eohnl13hgrht8fkjunckh</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>HeyTeacher necesita acceso a tu galería para subir tu foto de perfil, CV y certificaciones.</string>
 	<key>NSCameraUsageDescription</key>
