@@ -9,7 +9,7 @@ import 'upload_material_screen.dart';
 import 'material_detail_screen.dart';
 
 class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({Key? key}) : super(key: key);
+  const MaterialsScreen({super.key});
 
   @override
   State<MaterialsScreen> createState() => _MaterialsScreenState();
@@ -57,7 +57,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     _getCategoryLabel(category),
                     category,
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -183,8 +183,7 @@ class MaterialCard extends StatelessWidget {
   final TeachingMaterial material;
   final VoidCallback onTap;
 
-  const MaterialCard({Key? key, required this.material, required this.onTap})
-      : super(key: key);
+  const MaterialCard({super.key, required this.material, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

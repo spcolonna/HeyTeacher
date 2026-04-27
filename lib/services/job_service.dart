@@ -6,73 +6,84 @@ import '../models/teacher_profile.dart';
 import 'firestore_wrapper.dart';
 
 class JobService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
 
+  // Create a new job posting
   Future<String> createJobPosting(JobPosting job) async {
     try {
-      DocumentReference docRef =
-          await FirestoreWrapper.addDocument('jobs', job.toMap());
+      DocumentReference docRef = await _firestore.collection('jobs').add(job.toMap());
       return docRef.id;
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error creating job posting: $e');
-      print('Stack trace: $stackTrace');
       rethrow;
     }
   }
 
+  // Get all active job postings
   Stream<List<JobPosting>> getActiveJobs() {
-    Query query = FirestoreWrapper.query('jobs')
+    return _firestore
+        .collection('jobs')
         .where('status', isEqualTo: 'active')
-        .orderBy('postedAt', descending: true);
-    return FirestoreWrapper.getCollectionStream(query, 'Active jobs').map(
-        (snapshot) =>
-            snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList());
+        .orderBy('postedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => JobPosting.fromFirestore(doc))
+        .toList());
   }
 
+  // Get jobs posted by a specific institution
   Stream<List<JobPosting>> getJobsByInstitution(String uid) {
-    Query query = FirestoreWrapper.query('jobs')
+    return _firestore
+        .collection('jobs')
         .where('postedBy', isEqualTo: uid)
-        .orderBy('postedAt', descending: true);
-    return FirestoreWrapper.getCollectionStream(
-            query, 'Jobs by institution $uid')
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList());
+        .orderBy('postedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+        .map((doc) => JobPosting.fromFirestore(doc))
+        .toList());
   }
 
+  // Search jobs with filters
   Stream<List<JobPosting>> searchJobs({
     String? location,
     List<AvailabilityShift>? shifts,
     List<TeachingLevel>? levels,
   }) {
-    Query query =
-        FirestoreWrapper.query('jobs').where('status', isEqualTo: 'active');
+    Query query = _firestore
+        .collection('jobs')
+        .where('status', isEqualTo: 'active');
+
     if (location != null && location.isNotEmpty) {
       query = query.where('location', isEqualTo: location);
     }
+
     return query
         .orderBy('postedAt', descending: true)
         .snapshots()
-        .handleError((error, stackTrace) {
-      print('Error searching jobs: $error');
-      print('Stack trace: $stackTrace');
-    }).map((snapshot) {
-      List<JobPosting> jobs =
-          snapshot.docs.map((doc) => JobPosting.fromFirestore(doc)).toList();
+        .map((snapshot) {
+      List<JobPosting> jobs = snapshot.docs
+          .map((doc) => JobPosting.fromFirestore(doc))
+          .toList();
+
+      // Filter by shifts and levels in-memory
       if (shifts != null && shifts.isNotEmpty) {
-        jobs = jobs
-            .where((job) => job.shifts.any((shift) => shifts.contains(shift)))
-            .toList();
+        jobs = jobs.where((job) =>
+            job.shifts.any((shift) => shifts.contains(shift))
+        ).toList();
       }
+
       if (levels != null && levels.isNotEmpty) {
-        jobs = jobs
-            .where((job) => job.levels.any((level) => levels.contains(level)))
-            .toList();
+        jobs = jobs.where((job) =>
+            job.levels.any((level) => levels.contains(level))
+        ).toList();
       }
+
       return jobs;
     });
   }
 
-  // Apply to a job — ahora recibe jobTitle e institutionName
+  // Apply to a job — ahora recibe jobTitle, institutionName y teacherPhotoUrl
   Future<void> applyToJob({
     required String jobId,
     required String jobTitle,
@@ -80,6 +91,7 @@ class JobService {
     required String teacherId,
     required String teacherName,
     String? teacherEmail,
+    String? teacherPhotoUrl,  // ← AGREGADO
     String? cvUrl,
     String? coverLetter,
   }) async {
@@ -99,6 +111,7 @@ class JobService {
         teacherId: teacherId,
         teacherName: teacherName,
         teacherEmail: teacherEmail,
+        teacherPhotoUrl: teacherPhotoUrl,  // ← AGREGADO
         cvUrl: cvUrl,
         coverLetter: coverLetter,
         appliedAt: DateTime.now(),
@@ -114,28 +127,31 @@ class JobService {
     }
   }
 
+  // Get applications for a specific job
   Stream<List<JobApplication>> getApplicationsForJob(String jobId) {
-    Query query = FirestoreWrapper.query('applications')
+    return _firestore
+        .collection('applications')
         .where('jobId', isEqualTo: jobId)
-        .orderBy('appliedAt', descending: true);
-    return FirestoreWrapper.getCollectionStream(
-            query, 'Applications for job $jobId')
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => JobApplication.fromFirestore(doc))
-            .toList());
+        .map((doc) => JobApplication.fromFirestore(doc))
+        .toList());
   }
 
+  // Get applications submitted by a teacher
   Stream<List<JobApplication>> getApplicationsByTeacher(String teacherId) {
-    Query query = FirestoreWrapper.query('applications')
+    return _firestore
+        .collection('applications')
         .where('teacherId', isEqualTo: teacherId)
-        .orderBy('appliedAt', descending: true);
-    return FirestoreWrapper.getCollectionStream(
-            query, 'Applications by teacher $teacherId')
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => JobApplication.fromFirestore(doc))
-            .toList());
+        .map((doc) => JobApplication.fromFirestore(doc))
+        .toList());
   }
 
+  // Update application status
   Future<void> updateApplicationStatus({
     required String applicationId,
     required ApplicationStatus status,
@@ -145,40 +161,46 @@ class JobService {
       Map<String, dynamic> updates = {
         'status': status.toString().split('.').last,
       };
-      if (notes != null) updates['institutionNotes'] = notes;
-      await FirestoreWrapper.updateDocument(
-          'applications', applicationId, updates);
-    } catch (e, stackTrace) {
+
+      if (notes != null) {
+        updates['institutionNotes'] = notes;
+      }
+
+      await _firestore.collection('applications').doc(applicationId).update(updates);
+    } catch (e) {
       print('Error updating application status: $e');
-      print('Stack trace: $stackTrace');
       rethrow;
     }
   }
 
+  // Update job status
   Future<void> updateJobStatus(String jobId, JobStatus status) async {
     try {
-      await FirestoreWrapper.updateDocument('jobs', jobId, {
+      await _firestore.collection('jobs').doc(jobId).update({
         'status': status.toString().split('.').last,
       });
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error updating job status: $e');
-      print('Stack trace: $stackTrace');
       rethrow;
     }
   }
 
+  // Delete job posting
   Future<void> deleteJob(String jobId) async {
     try {
-      await FirestoreWrapper.deleteDocument('jobs', jobId);
-      QuerySnapshot applications = await FirestoreWrapper.query('applications')
+      await _firestore.collection('jobs').doc(jobId).delete();
+
+      // Optionally delete associated applications
+      QuerySnapshot applications = await _firestore
+          .collection('applications')
           .where('jobId', isEqualTo: jobId)
           .get();
+
       for (var doc in applications.docs) {
-        await FirestoreWrapper.deleteDocument('applications', doc.id);
+        await doc.reference.delete();
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error deleting job: $e');
-      print('Stack trace: $stackTrace');
       rethrow;
     }
   }

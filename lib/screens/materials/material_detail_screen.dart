@@ -8,8 +8,7 @@ import '../../services/material_service.dart';
 class MaterialDetailScreen extends StatelessWidget {
   final TeachingMaterial material;
 
-  const MaterialDetailScreen({Key? key, required this.material})
-      : super(key: key);
+  const MaterialDetailScreen({super.key, required this.material});
 
   Future<void> _downloadMaterial(BuildContext context) async {
     if (material.fileUrl == null) {

@@ -6,7 +6,7 @@ import '../../services/firestore_wrapper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditInstitutionProfileScreen extends StatefulWidget {
-  const EditInstitutionProfileScreen({Key? key}) : super(key: key);
+  const EditInstitutionProfileScreen({super.key});
 
   @override
   State<EditInstitutionProfileScreen> createState() =>

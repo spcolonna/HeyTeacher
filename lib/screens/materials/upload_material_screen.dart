@@ -11,7 +11,7 @@ import '../../services/material_service.dart';
 import '../../services/storage_service.dart';
 
 class UploadMaterialScreen extends StatefulWidget {
-  const UploadMaterialScreen({Key? key}) : super(key: key);
+  const UploadMaterialScreen({super.key});
 
   @override
   State<UploadMaterialScreen> createState() => _UploadMaterialScreenState();
@@ -27,7 +27,7 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
   final _tagsController = TextEditingController();
 
   MaterialCategory _selectedCategory = MaterialCategory.lessonPlan;
-  List<TeachingLevel> _selectedLevels = [];
+  final List<TeachingLevel> _selectedLevels = [];
 
   // Para móvil
   File? _selectedFile;

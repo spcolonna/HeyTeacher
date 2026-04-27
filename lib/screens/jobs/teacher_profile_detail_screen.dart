@@ -48,6 +48,19 @@ class _TeacherProfileDetailScreenState
     }
   }
 
+  Widget _buildPlaceholderAvatar() {
+    return Text(
+      widget.application.teacherName.isNotEmpty
+          ? widget.application.teacherName[0].toUpperCase()
+          : 'T',
+      style: TextStyle(
+        fontSize: 40,
+        fontWeight: FontWeight.bold,
+        color: Colors.blue.shade700,
+      ),
+    );
+  }
+
   String _getCertLabel(CertificationType cert) {
     return cert.toString().split('.').last.toUpperCase();
   }
@@ -79,7 +92,7 @@ class _TeacherProfileDetailScreenState
   void _showUpdateStatusDialog(BuildContext context, JobService jobService) {
     ApplicationStatus selectedStatus = widget.application.status;
     final notesController =
-        TextEditingController(text: widget.application.institutionNotes);
+    TextEditingController(text: widget.application.institutionNotes);
 
     showDialog(
       context: context,
@@ -95,7 +108,7 @@ class _TeacherProfileDetailScreenState
               const SizedBox(height: 8),
               ...ApplicationStatus.values.map((status) {
                 return RadioListTile<ApplicationStatus>(
-                  title: Text(status.toString().split('.').last),
+                  title: Text(status.toString().split('.').last),  // ← CORREGIDO
                   value: status,
                   groupValue: selectedStatus,
                   onChanged: (value) => setState(() => selectedStatus = value!),
@@ -174,7 +187,7 @@ class _TeacherProfileDetailScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header con info básica
+            // Header con info básica y FOTO
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -184,17 +197,46 @@ class _TeacherProfileDetailScreenState
               ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 44,
-                    backgroundColor: Colors.white,
-                    child: Text(
-                      widget.application.teacherName.isNotEmpty
-                          ? widget.application.teacherName[0].toUpperCase()
-                          : 'T',
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.white,
+                      child: widget.application.teacherPhotoUrl != null
+                          ? ClipOval(
+                        child: Image.network(
+                          widget.application.teacherPhotoUrl!,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildPlaceholderAvatar();
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                    : null,
+                                color: Colors.blue.shade700,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                          : _buildPlaceholderAvatar(),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -211,7 +253,7 @@ class _TeacherProfileDetailScreenState
                     Text(
                       widget.application.teacherEmail!,
                       style:
-                          const TextStyle(color: Colors.white70, fontSize: 14),
+                      const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -309,7 +351,7 @@ class _TeacherProfileDetailScreenState
                           spacing: 8,
                           runSpacing: 8,
                           children:
-                              _teacherProfile!.preferredLevels.map((level) {
+                          _teacherProfile!.preferredLevels.map((level) {
                             return Chip(
                               label: Text(_getLevelLabel(level)),
                               backgroundColor: Colors.purple.shade50,

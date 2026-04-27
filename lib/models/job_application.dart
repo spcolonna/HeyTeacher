@@ -10,6 +10,7 @@ class JobApplication {
   final String teacherId;
   final String teacherName;
   final String? teacherEmail;
+  final String? teacherPhotoUrl;
   final String? cvUrl;
   final String? coverLetter;
   final DateTime appliedAt;
@@ -24,6 +25,7 @@ class JobApplication {
     required this.teacherId,
     required this.teacherName,
     this.teacherEmail,
+    this.teacherPhotoUrl,
     this.cvUrl,
     this.coverLetter,
     required this.appliedAt,
@@ -36,16 +38,17 @@ class JobApplication {
     return JobApplication(
       id: doc.id,
       jobId: data['jobId'] ?? '',
-      jobTitle: data['jobTitle'] ?? 'Unknown Job',
+      jobTitle: data['jobTitle'] ?? '',
       institutionName: data['institutionName'] ?? '',
       teacherId: data['teacherId'] ?? '',
       teacherName: data['teacherName'] ?? '',
       teacherEmail: data['teacherEmail'],
+      teacherPhotoUrl: data['teacherPhotoUrl'],
       cvUrl: data['cvUrl'],
       coverLetter: data['coverLetter'],
       appliedAt: (data['appliedAt'] as Timestamp).toDate(),
       status: ApplicationStatus.values.firstWhere(
-        (e) => e.toString() == 'ApplicationStatus.${data['status']}',
+            (e) => e.toString() == 'ApplicationStatus.${data['status']}',
         orElse: () => ApplicationStatus.pending,
       ),
       institutionNotes: data['institutionNotes'],
@@ -60,6 +63,7 @@ class JobApplication {
       'teacherId': teacherId,
       'teacherName': teacherName,
       'teacherEmail': teacherEmail,
+      'teacherPhotoUrl': teacherPhotoUrl,
       'cvUrl': cvUrl,
       'coverLetter': coverLetter,
       'appliedAt': Timestamp.fromDate(appliedAt),

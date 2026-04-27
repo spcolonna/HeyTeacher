@@ -18,8 +18,9 @@ class TeacherProfile {
   final String? cvUrl;
   final int yearsOfExperience;
   final String? location; // Geographic zone
+  final String? photoUrl; // Profile photo URL
   final DateTime updatedAt;
-  
+
   TeacherProfile({
     required this.uid,
     required this.fullName,
@@ -32,9 +33,10 @@ class TeacherProfile {
     this.cvUrl,
     this.yearsOfExperience = 0,
     this.location,
+    this.photoUrl,
     required this.updatedAt,
   });
-  
+
   factory TeacherProfile.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return TeacherProfile(
@@ -44,30 +46,31 @@ class TeacherProfile {
       bio: data['bio'],
       certifications: (data['certifications'] as List<dynamic>?)
           ?.map((e) => CertificationType.values.firstWhere(
-                (cert) => cert.toString() == 'CertificationType.$e',
-                orElse: () => CertificationType.other,
-              ))
+            (cert) => cert.toString() == 'CertificationType.$e',
+        orElse: () => CertificationType.other,
+      ))
           .toList() ?? [],
       certificationFiles: List<String>.from(data['certificationFiles'] ?? []),
       availability: (data['availability'] as List<dynamic>?)
           ?.map((e) => AvailabilityShift.values.firstWhere(
-                (shift) => shift.toString() == 'AvailabilityShift.$e',
-                orElse: () => AvailabilityShift.morning,
-              ))
+            (shift) => shift.toString() == 'AvailabilityShift.$e',
+        orElse: () => AvailabilityShift.morning,
+      ))
           .toList() ?? [],
       preferredLevels: (data['preferredLevels'] as List<dynamic>?)
           ?.map((e) => TeachingLevel.values.firstWhere(
-                (level) => level.toString() == 'TeachingLevel.$e',
-                orElse: () => TeachingLevel.primary,
-              ))
+            (level) => level.toString() == 'TeachingLevel.$e',
+        orElse: () => TeachingLevel.primary,
+      ))
           .toList() ?? [],
       cvUrl: data['cvUrl'],
       yearsOfExperience: data['yearsOfExperience'] ?? 0,
       location: data['location'],
+      photoUrl: data['photoUrl'],
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,
@@ -80,6 +83,7 @@ class TeacherProfile {
       'cvUrl': cvUrl,
       'yearsOfExperience': yearsOfExperience,
       'location': location,
+      'photoUrl': photoUrl,
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }

@@ -97,12 +97,12 @@ class _JobsScreenState extends State<JobsScreen> {
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: _searchText.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchText = '');
-                              },
-                            )
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchText = '');
+                        },
+                      )
                           : null,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -150,10 +150,10 @@ class _JobsScreenState extends State<JobsScreen> {
               stream: user?.userType == UserType.institution
                   ? _jobService.getJobsByInstitution(user!.uid)
                   : _jobService.searchJobs(
-                      location: _locationFilter,
-                      shifts: _shiftFilters,
-                      levels: _levelFilters,
-                    ),
+                location: _locationFilter,
+                shifts: _shiftFilters,
+                levels: _levelFilters,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -178,8 +178,8 @@ class _JobsScreenState extends State<JobsScreen> {
                           _searchText.isNotEmpty || _locationFilter != null
                               ? 'No jobs found'
                               : user?.userType == UserType.institution
-                                  ? 'No jobs posted yet'
-                                  : 'No jobs available',
+                              ? 'No jobs posted yet'
+                              : 'No jobs available',
                           style: TextStyle(
                               fontSize: 18, color: Colors.grey.shade600),
                         ),
@@ -289,18 +289,24 @@ class JobCard extends StatelessWidget {
                   Icon(Icons.location_on,
                       size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
-                  Text(
-                    job.location,
-                    style: TextStyle(color: Colors.grey.shade600),
+                  Flexible(  // ← AGREGADO: Flexible para location
+                    child: Text(
+                      job.location,
+                      style: TextStyle(color: Colors.grey.shade600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
-                  Text(
-                    job.shifts
-                        .map((s) => s.toString().split('.').last)
-                        .join(', '),
-                    style: TextStyle(color: Colors.grey.shade600),
+                  Flexible(  // ← AGREGADO: Flexible para shifts
+                    child: Text(
+                      job.shifts
+                          .map((s) => s.toString().split('.').last)
+                          .join(', '),
+                      style: TextStyle(color: Colors.grey.shade600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

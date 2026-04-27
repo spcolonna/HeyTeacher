@@ -8,7 +8,7 @@ import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
 
 class MarketplaceScreen extends StatefulWidget {
-  const MarketplaceScreen({Key? key}) : super(key: key);
+  const MarketplaceScreen({super.key});
 
   @override
   State<MarketplaceScreen> createState() => _MarketplaceScreenState();
@@ -41,7 +41,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     category,
                     _getCategoryIcon(category),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -163,8 +163,7 @@ class BenefitCard extends StatelessWidget {
   final Benefit benefit;
   final VoidCallback onTap;
 
-  const BenefitCard({Key? key, required this.benefit, required this.onTap})
-      : super(key: key);
+  const BenefitCard({super.key, required this.benefit, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -240,8 +239,7 @@ class BenefitCard extends StatelessWidget {
 class BenefitDetailScreen extends StatelessWidget {
   final Benefit benefit;
 
-  const BenefitDetailScreen({Key? key, required this.benefit})
-      : super(key: key);
+  const BenefitDetailScreen({super.key, required this.benefit});
 
   @override
   Widget build(BuildContext context) {

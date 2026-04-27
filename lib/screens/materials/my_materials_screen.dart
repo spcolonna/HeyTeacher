@@ -9,7 +9,7 @@ import '../materials/upload_material_screen.dart';
 import '../materials/material_detail_screen.dart';
 
 class MyMaterialsScreen extends StatelessWidget {
-  const MyMaterialsScreen({Key? key}) : super(key: key);
+  const MyMaterialsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

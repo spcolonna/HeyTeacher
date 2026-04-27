@@ -2,36 +2,35 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final _uuid = const Uuid();
 
-  // Upload file and return download URL - funciona para móvil y web
+  // Upload file and return download URL (soporta web y móvil)
   Future<String> uploadFile({
     File? file,
     Uint8List? bytes,
     required String folder,
-    required String fileName,
+    String? fileName,
   }) async {
     try {
       if (file == null && bytes == null) {
         throw Exception('Either file or bytes must be provided');
       }
 
-      String path = '$folder/$fileName';
-      Reference ref = _storage.ref().child(path);
+      String finalFileName = fileName ?? '${_uuid.v4()}.pdf';
+      String path = '$folder/$finalFileName';
 
+      Reference ref = _storage.ref().child(path);
       UploadTask uploadTask;
-      if (kIsWeb && bytes != null) {
+
+      if (bytes != null) {
         // Web: usar bytes
         uploadTask = ref.putData(bytes);
-      } else if (file != null) {
-        // Móvil: usar file
-        uploadTask = ref.putFile(file);
       } else {
-        throw Exception('Invalid upload parameters for platform');
+        // Móvil: usar file
+        uploadTask = ref.putFile(file!);
       }
 
       TaskSnapshot snapshot = await uploadTask;
@@ -42,24 +41,6 @@ class StorageService {
       print('Error uploading file: $e');
       rethrow;
     }
-  }
-
-  // Upload teaching material - ahora soporta web y móvil
-  Future<String> uploadTeachingMaterial({
-    File? file,
-    Uint8List? bytes,
-    required String userId,
-    required String originalFileName,
-  }) async {
-    String fileExtension = originalFileName.split('.').last;
-    String fileName = '${_uuid.v4()}.$fileExtension';
-
-    return uploadFile(
-      file: file,
-      bytes: bytes,
-      folder: 'materials/$userId',
-      fileName: fileName,
-    );
   }
 
   // Upload CV
@@ -81,7 +62,7 @@ class StorageService {
     File? file,
     Uint8List? bytes,
     required String userId,
-    required String fileName,
+    String? fileName,
   }) async {
     return uploadFile(
       file: file,
@@ -91,31 +72,42 @@ class StorageService {
     );
   }
 
-  // Upload profile photo
-  Future<String> uploadProfilePhoto({
+  // Upload teaching material
+  Future<String> uploadTeachingMaterial({
     File? file,
     Uint8List? bytes,
     required String userId,
+    String? originalFileName,
   }) async {
     return uploadFile(
       file: file,
       bytes: bytes,
-      folder: 'profile_photos',
-      fileName: '$userId.jpg',
+      folder: 'materials/$userId',
+      fileName: originalFileName,
+    );
+  }
+
+  // Upload profile photo
+  Future<String> uploadProfilePhoto({
+    required File file,
+    required String userId,
+  }) async {
+    return uploadFile(
+      file: file,
+      folder: 'profile_photos/$userId',
+      fileName: 'profile.jpg',
     );
   }
 
   // Upload institution logo
   Future<String> uploadInstitutionLogo({
-    File? file,
-    Uint8List? bytes,
+    required File file,
     required String institutionId,
   }) async {
     return uploadFile(
       file: file,
-      bytes: bytes,
-      folder: 'institution_logos',
-      fileName: '$institutionId.png',
+      folder: 'institution_logos/$institutionId',
+      fileName: 'logo.png',
     );
   }
 
