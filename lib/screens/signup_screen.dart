@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/app_user.dart';
 import 'home_screen.dart';
+import 'google_user_type_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -80,6 +81,56 @@ class _SignUpScreenState extends State<SignUpScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _handleGoogleSignUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Usar Google SignIn pero luego crear usuario con datos del formulario
+    try {
+      final credential = await authProvider.signInWithGoogle();
+
+      if (!mounted) return;
+
+      if (credential.isExisting) {
+        // Ya existe, ir a home
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else if (credential.isNewUser) {
+        // Nuevo usuario: crear con datos del formulario
+        final ok = await authProvider.createGoogleUser(
+          firebaseUser: credential.firebaseUser!,
+          userType: _selectedUserType,
+        );
+
+        if (!mounted) return;
+        if (ok) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(authProvider.errorMessage ?? 'Error creating account'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Sign-Up cancelled'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
@@ -413,6 +464,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               'Create Account',
                               style: TextStyle(fontSize: 16),
                             ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Google Sign-Up
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    return OutlinedButton.icon(
+                      onPressed:
+                          authProvider.isLoading ? null : _handleGoogleSignUp,
+                      icon: Image.network(
+                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                        width: 20,
+                        height: 20,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.account_circle, size: 20),
+                      ),
+                      label: const Text('Sign up with Google'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     );
                   },
                 ),

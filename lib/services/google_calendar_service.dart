@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/calendar/v3.dart' as gcal;
 import 'package:extension_google_sign_in_as_googleapis_auth/extension_google_sign_in_as_googleapis_auth.dart';
@@ -39,12 +40,25 @@ class GoogleCalendarService {
     _account = null;
   }
 
+  /// Returns a Firebase OAuthCredential from the current Google Sign-In session.
+  /// Triggers sign-in if not already signed in.
+  static Future<OAuthCredential?> getFirebaseCredential() async {
+    _account ??= await _googleSignIn.signIn();
+    if (_account == null) return null;
+    final auth = await _account!.authentication;
+    return GoogleAuthProvider.credential(
+      accessToken: auth.accessToken,
+      idToken: auth.idToken,
+    );
+  }
+
   /// Creates a Google Calendar event with Meet conferencing.
   /// Returns the Meet link or null on failure.
   static Future<MeetResult> createMeeting({
     required String title,
     required DateTime scheduledAt,
     required Duration duration,
+    List<String> attendeeEmails = const [],
   }) async {
     try {
       // Ensure signed in
@@ -52,6 +66,19 @@ class GoogleCalendarService {
       _account ??= await _googleSignIn.signIn();
       if (_account == null) {
         return MeetResult.error('Sign-in cancelled');
+      }
+
+      // On iOS requestScopes doesn't work on stale sessions — if it fails,
+      // force a fresh sign-in so the consent screen includes Calendar scope.
+      final hasScope = await _googleSignIn.requestScopes([
+        gcal.CalendarApi.calendarEventsScope,
+      ]);
+      if (!hasScope) {
+        await _googleSignIn.signOut();
+        _account = await _googleSignIn.signIn();
+        if (_account == null) {
+          return MeetResult.error('Sign-in cancelled');
+        }
       }
 
       final authClient = await _googleSignIn.authenticatedClient();
@@ -71,6 +98,9 @@ class GoogleCalendarService {
           dateTime: scheduledAt.add(duration),
           timeZone: 'America/Montevideo',
         ),
+        attendees: attendeeEmails
+            .map((e) => gcal.EventAttendee(email: e))
+            .toList(),
         conferenceData: gcal.ConferenceData(
           createRequest: gcal.CreateConferenceRequest(
             requestId: '${DateTime.now().millisecondsSinceEpoch}',

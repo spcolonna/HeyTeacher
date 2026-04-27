@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -8,7 +10,7 @@ import '../../services/classroom_service.dart';
 import 'create_group_screen.dart';
 import 'create_meeting_screen.dart';
 
-class GroupDetailScreen extends StatelessWidget {
+class GroupDetailScreen extends StatefulWidget {
   final ClassGroup group;
   final String teacherId;
 
@@ -19,8 +21,41 @@ class GroupDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<GroupDetailScreen> createState() => _GroupDetailScreenState();
+}
+
+class _GroupDetailScreenState extends State<GroupDetailScreen> {
+  late final ClassroomService _service;
+  late final StreamSubscription<List<ClassMeeting>> _meetingsSub;
+  List<ClassMeeting> _meetings = [];
+  bool _loadingMeetings = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _service = ClassroomService();
+    _meetingsSub = _service
+        .getMeetingsForGroup(widget.group.id)
+        .listen(
+          (meetings) {
+            if (mounted) setState(() { _meetings = meetings; _loadingMeetings = false; });
+          },
+          onError: (_) {
+            if (mounted) setState(() { _loadingMeetings = false; });
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _meetingsSub.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final service = ClassroomService();
+    final group = widget.group;
+    final teacherId = widget.teacherId;
     final primary = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
@@ -48,6 +83,7 @@ class GroupDetailScreen extends StatelessWidget {
             builder: (_) => CreateMeetingScreen(
               groupId: group.id,
               teacherId: teacherId,
+              students: group.students,
             ),
           ),
         ),
@@ -83,32 +119,26 @@ class GroupDetailScreen extends StatelessWidget {
           // Meetings section
           const _SectionHeader(title: 'Meetings'),
           const SizedBox(height: 8),
-          StreamBuilder<List<ClassMeeting>>(
-            stream: service.getMeetingsForGroup(group.id),
-            builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(
-                    child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
-                ));
-              }
-              final meetings = snap.data ?? [];
-              if (meetings.isEmpty) {
-                return const _EmptyHint(
-                    text: 'No meetings yet. Tap "New Meeting" to create one.');
-              }
-              return Column(
-                children: meetings
-                    .map((m) => _MeetingCard(
-                          meeting: m,
-                          group: group,
-                          onDelete: () => service.deleteMeeting(m.id),
-                        ))
-                    .toList(),
-              );
-            },
-          ),
+          if (_loadingMeetings)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else if (_meetings.isEmpty)
+            const _EmptyHint(
+                text: 'No meetings yet. Tap "New Meeting" to create one.')
+          else
+            Column(
+              children: _meetings
+                  .map((m) => _MeetingCard(
+                        meeting: m,
+                        group: group,
+                        onDelete: () => _service.deleteMeeting(m.id),
+                      ))
+                  .toList(),
+            ),
         ],
       ),
     );

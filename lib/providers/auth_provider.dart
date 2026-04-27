@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
+export '../services/auth_service.dart' show GoogleSignInResult;
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -94,6 +95,46 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = null;
     } catch (e) {
       _errorMessage = 'Error signing out';
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<GoogleSignInResult> signInWithGoogle() async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      final result = await _authService.signInWithGoogle();
+      if (result.isExisting) {
+        _currentUser = result.appUser;
+        notifyListeners();
+      }
+      return result;
+    } catch (e) {
+      _errorMessage = 'Google Sign-In failed. Please try again.';
+      notifyListeners();
+      return GoogleSignInResult.cancelled();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> createGoogleUser({
+    required firebaseUser,
+    required UserType userType,
+  }) async {
+    _setLoading(true);
+    try {
+      _currentUser = await _authService.createGoogleUser(
+        firebaseUser: firebaseUser,
+        userType: userType,
+      );
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to create account.';
+      notifyListeners();
+      return false;
     } finally {
       _setLoading(false);
     }

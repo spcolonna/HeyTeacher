@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/app_user.dart';
 import 'firestore_wrapper.dart';
+import 'google_calendar_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -111,6 +112,50 @@ class AuthService {
     }
   }
 
+  // Sign in with Google (also grants Calendar scope via GoogleCalendarService)
+  Future<GoogleSignInResult> signInWithGoogle() async {
+    try {
+      final credential = await GoogleCalendarService.getFirebaseCredential();
+      if (credential == null) return GoogleSignInResult.cancelled();
+
+      final result = await _auth.signInWithCredential(credential);
+      final user = result.user;
+      if (user == null) return GoogleSignInResult.cancelled();
+
+      final isNew = result.additionalUserInfo?.isNewUser ?? false;
+
+      if (!isNew) {
+        final doc = await FirestoreWrapper.getDocument('users', user.uid);
+        if (doc.exists) {
+          return GoogleSignInResult.existing(AppUser.fromFirestore(doc));
+        }
+      }
+
+      // New user — caller must pick UserType then call createGoogleUser()
+      return GoogleSignInResult.newUser(user);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Finalize new Google user after they pick teacher/institution
+  Future<AppUser> createGoogleUser({
+    required User firebaseUser,
+    required UserType userType,
+  }) async {
+    final appUser = AppUser(
+      uid: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      userType: userType,
+      displayName: firebaseUser.displayName ?? 'User',
+      photoUrl: firebaseUser.photoURL,
+      createdAt: DateTime.now(),
+      isVerified: true,
+    );
+    await FirestoreWrapper.setDocument('users', firebaseUser.uid, appUser.toMap());
+    return appUser;
+  }
+
   // Reset password
   Future<void> resetPassword(String email) async {
     try {
@@ -153,4 +198,31 @@ class AuthService {
       rethrow;
     }
   }
+}
+
+enum _GoogleSignInStatus { existing, newUser, cancelled }
+
+class GoogleSignInResult {
+  final _GoogleSignInStatus _status;
+  final AppUser? appUser;
+  final User? firebaseUser;
+
+  const GoogleSignInResult._({
+    required _GoogleSignInStatus status,
+    this.appUser,
+    this.firebaseUser,
+  }) : _status = status;
+
+  factory GoogleSignInResult.existing(AppUser user) =>
+      GoogleSignInResult._(status: _GoogleSignInStatus.existing, appUser: user);
+
+  factory GoogleSignInResult.newUser(User user) =>
+      GoogleSignInResult._(status: _GoogleSignInStatus.newUser, firebaseUser: user);
+
+  factory GoogleSignInResult.cancelled() =>
+      const GoogleSignInResult._(status: _GoogleSignInStatus.cancelled);
+
+  bool get isExisting => _status == _GoogleSignInStatus.existing;
+  bool get isNewUser => _status == _GoogleSignInStatus.newUser;
+  bool get isCancelled => _status == _GoogleSignInStatus.cancelled;
 }

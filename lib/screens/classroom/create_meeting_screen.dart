@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../models/class_group.dart';
 import '../../services/google_calendar_service.dart';
 import '../../services/classroom_service.dart';
 
 class CreateMeetingScreen extends StatefulWidget {
   final String groupId;
   final String teacherId;
+  final List<Student> students;
 
   const CreateMeetingScreen({
     super.key,
     required this.groupId,
     required this.teacherId,
+    this.students = const [],
   });
 
   @override
@@ -87,10 +90,16 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
       }
     }
 
+    final attendeeEmails = widget.students
+        .where((s) => s.email != null)
+        .map((s) => s.email!)
+        .toList();
+
     final result = await GoogleCalendarService.createMeeting(
       title: _titleCtrl.text.trim(),
       scheduledAt: _scheduledAt,
       duration: _duration,
+      attendeeEmails: attendeeEmails,
     );
 
     if (!result.ok) {

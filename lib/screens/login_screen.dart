@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
+import 'google_user_type_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,6 +46,26 @@ class _LoginScreenState extends State<LoginScreen> {
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Login failed'),
           backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (result.isExisting) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else if (result.isNewUser) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              GoogleUserTypeScreen(firebaseUser: result.firebaseUser!),
         ),
       );
     }
@@ -99,8 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(20),
                       child: Image.asset(
                         'assets/images/hey_teacher_logo.jpeg',
-                        height: 120,
-                        width: 120,
+                        height: 280,
+                        width: 320,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           // Fallback si no carga la imagen
@@ -126,17 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
 
-                  // App name
-                  const Text(
-                    'HeyTeacher!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Connect • Teach • Grow',
@@ -146,7 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 28),
 
                   // Email field
                   TextFormField(
@@ -240,6 +251,31 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Login',
                                 style: TextStyle(fontSize: 16),
                               ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Google Sign-In
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, _) {
+                      return OutlinedButton.icon(
+                        onPressed:
+                            authProvider.isLoading ? null : _handleGoogleSignIn,
+                        icon: Image.network(
+                          'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                          width: 20,
+                          height: 20,
+                          errorBuilder: (_, __, ___) =>
+                              const Icon(Icons.account_circle, size: 20),
+                        ),
+                        label: const Text('Sign in with Google'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       );
                     },
                   ),
