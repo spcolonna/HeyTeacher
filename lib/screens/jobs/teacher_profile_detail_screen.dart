@@ -224,9 +224,10 @@ class _TeacherProfileDetailScreenState
   Widget _buildHeader() {
     final app = widget.application;
     final profile = _profile;
+    final photoUrl = profile?.photoUrl ?? app.teacherPhotoUrl;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blue.shade500, Colors.purple.shade500],
@@ -234,23 +235,24 @@ class _TeacherProfileDetailScreenState
           end: Alignment.bottomRight,
         ),
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4))],
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 3))],
             ),
             child: CircleAvatar(
-              radius: 48,
+              radius: 36,
               backgroundColor: Colors.white,
-              child: app.teacherPhotoUrl != null
+              child: photoUrl != null
                   ? ClipOval(
                       child: Image.network(
-                        app.teacherPhotoUrl!,
-                        width: 96,
-                        height: 96,
+                        photoUrl,
+                        width: 72,
+                        height: 72,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _avatarLetter(),
                       ),
@@ -258,75 +260,53 @@ class _TeacherProfileDetailScreenState
                   : _avatarLetter(),
             ),
           ),
-          const SizedBox(height: 14),
-          Text(app.teacherName,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-          const SizedBox(height: 4),
-          if (app.teacherEmail != null)
-            Text(app.teacherEmail!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-          const SizedBox(height: 8),
-          // Location + experience row
-          if (profile != null)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (profile.location != null) ...[
-                  const Icon(Icons.location_on, color: Colors.white70, size: 14),
-                  const SizedBox(width: 3),
-                  Text(profile.location!, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  const SizedBox(width: 12),
-                ],
-                const Icon(Icons.work_outline, color: Colors.white70, size: 14),
-                const SizedBox(width: 3),
-                Text('${profile.yearsOfExperience} yrs experience',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        app.teacherName,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(status: app.status),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                if (app.teacherEmail != null)
+                  Text(app.teacherEmail!, style: const TextStyle(color: Colors.white70, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (profile != null) ...[
+                      if (profile.location != null)
+                        _HeaderChip(icon: Icons.location_on, label: profile.location!),
+                      _HeaderChip(icon: Icons.work_outline, label: '${profile.yearsOfExperience} yrs'),
+                      if (profile.nativeSpeaker)
+                        _HeaderChip(icon: Icons.record_voice_over, label: 'Native', color: Colors.green.shade300),
+                    ],
+                    if (profile?.linkedinUrl != null)
+                      GestureDetector(
+                        onTap: () async {
+                          final url = Uri.tryParse(profile!.linkedinUrl!);
+                          if (url != null) await launchUrl(url, mode: LaunchMode.externalApplication);
+                        },
+                        child: const _HeaderChip(icon: Icons.link, label: 'LinkedIn'),
+                      ),
+                  ],
+                ),
               ],
             ),
-          const SizedBox(height: 10),
-          // Native badge + LinkedIn row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (profile?.nativeSpeaker == true)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.shade300),
-                  ),
-                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.record_voice_over, color: Colors.white, size: 13),
-                    SizedBox(width: 4),
-                    Text('Native Speaker', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                  ]),
-                ),
-              if (profile?.nativeSpeaker == true && profile?.linkedinUrl != null)
-                const SizedBox(width: 8),
-              if (profile?.linkedinUrl != null)
-                GestureDetector(
-                  onTap: () async {
-                    final url = Uri.tryParse(profile!.linkedinUrl!);
-                    if (url != null) await launchUrl(url, mode: LaunchMode.externalApplication);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white38),
-                    ),
-                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.link, color: Colors.white, size: 13),
-                      SizedBox(width: 4),
-                      Text('LinkedIn', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                    ]),
-                  ),
-                ),
-            ],
           ),
-          const SizedBox(height: 12),
-          _StatusBadge(status: app.status),
         ],
       ),
     );
@@ -575,6 +555,32 @@ class _DocumentRow extends StatelessWidget {
           style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
         ),
       ],
+    );
+  }
+}
+
+class _HeaderChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  const _HeaderChip({required this.icon, required this.label, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = color ?? Colors.white60;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: c.withValues(alpha: 0.5)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, color: c, size: 11),
+        const SizedBox(width: 3),
+        Text(label, style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w500)),
+      ]),
     );
   }
 }
