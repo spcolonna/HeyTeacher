@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/job_application.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/job_service.dart';
 import '../../services/firestore_wrapper.dart';
+import '../profile/document_preview_screen.dart';
 
 class TeacherProfileDetailScreen extends StatefulWidget {
   final JobApplication application;
@@ -17,7 +18,7 @@ class TeacherProfileDetailScreen extends StatefulWidget {
 
 class _TeacherProfileDetailScreenState
     extends State<TeacherProfileDetailScreen> {
-  TeacherProfile? _teacherProfile;
+  TeacherProfile? _profile;
   bool _isLoading = true;
 
   @override
@@ -28,128 +29,70 @@ class _TeacherProfileDetailScreenState
 
   Future<void> _loadTeacherProfile() async {
     try {
-      DocumentSnapshot doc = await FirestoreWrapper.getDocument(
+      final doc = await FirestoreWrapper.getDocument(
         'teacher_profiles',
         widget.application.teacherId,
       );
-
       if (doc.exists) {
-        setState(() {
-          _teacherProfile = TeacherProfile.fromFirestore(doc);
-          _isLoading = false;
-        });
+        setState(() { _profile = TeacherProfile.fromFirestore(doc); _isLoading = false; });
       } else {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error loading teacher profile: $e');
       setState(() => _isLoading = false);
-    }
-  }
-
-  Widget _buildPlaceholderAvatar() {
-    return Text(
-      widget.application.teacherName.isNotEmpty
-          ? widget.application.teacherName[0].toUpperCase()
-          : 'T',
-      style: TextStyle(
-        fontSize: 40,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue.shade700,
-      ),
-    );
-  }
-
-  String _getCertLabel(CertificationType cert) {
-    return cert.toString().split('.').last.toUpperCase();
-  }
-
-  String _getShiftLabel(AvailabilityShift shift) {
-    switch (shift) {
-      case AvailabilityShift.morning:
-        return 'Morning';
-      case AvailabilityShift.afternoon:
-        return 'Afternoon';
-      case AvailabilityShift.evening:
-        return 'Evening';
-    }
-  }
-
-  String _getLevelLabel(TeachingLevel level) {
-    switch (level) {
-      case TeachingLevel.kinder:
-        return 'Kinder';
-      case TeachingLevel.primary:
-        return 'Primary';
-      case TeachingLevel.secondary:
-        return 'Secondary';
-      case TeachingLevel.adult:
-        return 'Adult';
     }
   }
 
   void _showUpdateStatusDialog(BuildContext context, JobService jobService) {
     ApplicationStatus selectedStatus = widget.application.status;
-    final notesController =
+    final notesCtrl =
         TextEditingController(text: widget.application.institutionNotes);
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
           title: const Text('Update Application'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Status:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Status:', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ...ApplicationStatus.values.map((status) {
-                return RadioListTile<ApplicationStatus>(
-                  title: Text(status.toString().split('.').last), // ← CORREGIDO
-                  value: status,
-                  groupValue: selectedStatus,
-                  onChanged: (value) => setState(() => selectedStatus = value!),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                );
-              }),
+              ...ApplicationStatus.values.map((s) => RadioListTile<ApplicationStatus>(
+                    title: Text(s.toString().split('.').last),
+                    value: s,
+                    groupValue: selectedStatus,
+                    onChanged: (v) => setS(() => selectedStatus = v!),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  )),
               const SizedBox(height: 8),
-              const Text('Notes:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
               TextField(
-                controller: notesController,
+                controller: notesCtrl,
                 maxLines: 3,
                 decoration: InputDecoration(
                   hintText: 'Add a note for this applicant...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
               onPressed: () async {
                 await jobService.updateApplicationStatus(
                   applicationId: widget.application.id,
                   status: selectedStatus,
-                  notes: notesController.text.trim(),
+                  notes: notesCtrl.text.trim(),
                 );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Status updated'),
-                      backgroundColor: Colors.green,
-                    ),
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Status updated'), backgroundColor: Colors.green),
                   );
                 }
               },
@@ -163,12 +106,10 @@ class _TeacherProfileDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final JobService jobService = JobService();
+    final jobService = JobService();
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -186,249 +127,76 @@ class _TeacherProfileDetailScreenState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header con info básica y FOTO
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.purple.shade400],
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: widget.application.teacherPhotoUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                widget.application.teacherPhotoUrl!,
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _buildPlaceholderAvatar();
-                                },
-                                loadingBuilder:
-                                    (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                      color: Colors.blue.shade700,
-                                    ),
-                                  );
-                                },
-                              ),
-                            )
-                          : _buildPlaceholderAvatar(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.application.teacherName,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (widget.application.teacherEmail != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.application.teacherEmail!,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  _StatusBadge(status: widget.application.status),
-                ],
-              ),
-            ),
-
+            _buildHeader(),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Aplicó para
-                  const _SectionTitle('Applied for'),
-                  _InfoCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.application.jobTitle,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.application.institutionName,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Perfil del teacher si existe
-                  if (_teacherProfile != null) ...[
-                    const _SectionTitle('Profile Information'),
-                    _InfoCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (_teacherProfile!.bio != null) ...[
-                            Text(_teacherProfile!.bio!),
-                            const SizedBox(height: 12),
-                          ],
-                          if (_teacherProfile!.location != null)
-                            _InfoRow('Location', _teacherProfile!.location!),
-                          _InfoRow('Experience',
-                              '${_teacherProfile!.yearsOfExperience} years'),
-                          if (_teacherProfile!.phone != null)
-                            _InfoRow('Phone', _teacherProfile!.phone!),
-                        ],
-                      ),
-                    ),
+                  _buildAppliedForCard(),
+                  if (_profile != null) ...[
                     const SizedBox(height: 20),
-                    if (_teacherProfile!.certifications.isNotEmpty) ...[
-                      const _SectionTitle('Certifications'),
-                      _InfoCard(
+                    if (_profile!.bio != null) ...[
+                      _buildCvSection(icon: Icons.notes, title: 'Professional Summary', child: Text(_profile!.bio!)),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildCvSection(
+                      icon: Icons.workspace_premium_outlined,
+                      title: 'Certifications',
+                      child: _buildCertChips(),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildCvSection(
+                      icon: Icons.schedule_outlined,
+                      title: 'Availability & Levels',
+                      child: _buildAvailabilityAndLevels(),
+                    ),
+                    if (_profile!.teachingMethodologies.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildCvSection(
+                        icon: Icons.psychology_outlined,
+                        title: 'Teaching Methodology',
                         child: Wrap(
                           spacing: 8,
-                          runSpacing: 8,
-                          children: _teacherProfile!.certifications.map((cert) {
-                            return Chip(
-                              label: Text(_getCertLabel(cert)),
-                              backgroundColor: Colors.blue.shade50,
-                            );
-                          }).toList(),
+                          runSpacing: 6,
+                          children: _profile!.teachingMethodologies
+                              .map((m) => Chip(
+                                    label: Text(m, style: const TextStyle(fontSize: 12)),
+                                    backgroundColor: Colors.teal.shade50,
+                                    side: BorderSide(color: Colors.teal.shade200),
+                                  ))
+                              .toList(),
                         ),
                       ),
-                      const SizedBox(height: 20),
                     ],
-                    if (_teacherProfile!.availability.isNotEmpty) ...[
-                      const _SectionTitle('Availability'),
-                      _InfoCard(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _teacherProfile!.availability.map((shift) {
-                            return Chip(
-                              label: Text(_getShiftLabel(shift)),
-                              backgroundColor: Colors.green.shade50,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                    if (_teacherProfile!.preferredLevels.isNotEmpty) ...[
-                      const _SectionTitle('Preferred Teaching Levels'),
-                      _InfoCard(
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children:
-                              _teacherProfile!.preferredLevels.map((level) {
-                            return Chip(
-                              label: Text(_getLevelLabel(level)),
-                              backgroundColor: Colors.purple.shade50,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                    const SizedBox(height: 16),
+                    _buildDocumentsSection(),
                   ] else ...[
-                    _InfoCard(
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.grey.shade600),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'This teacher hasn\'t completed their profile yet.',
-                              style: TextStyle(color: Colors.grey.shade600),
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 16),
+                    _buildInfoCard(
+                      child: Row(children: [
+                        Icon(Icons.info_outline, color: Colors.grey.shade500),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text("This teacher hasn't completed their profile yet.",
+                            style: TextStyle(color: Colors.grey.shade600))),
+                      ]),
                     ),
-                    const SizedBox(height: 20),
                   ],
-
-                  // Notas de la institución si las hay
-                  if (widget.application.institutionNotes != null &&
-                      widget.application.institutionNotes!.isNotEmpty) ...[
-                    const _SectionTitle('Your Notes'),
-                    _InfoCard(
-                      child: Text(
-                        widget.application.institutionNotes!,
-                        style: const TextStyle(fontStyle: FontStyle.italic),
-                      ),
+                  if (widget.application.institutionNotes?.isNotEmpty == true) ...[
+                    const SizedBox(height: 16),
+                    _buildCvSection(
+                      icon: Icons.sticky_note_2_outlined,
+                      title: 'Your Notes',
+                      child: Text(widget.application.institutionNotes!, style: const TextStyle(fontStyle: FontStyle.italic)),
                     ),
-                    const SizedBox(height: 20),
                   ],
-
-                  // Cover letter si la hay
-                  if (widget.application.coverLetter != null &&
-                      widget.application.coverLetter!.isNotEmpty) ...[
-                    const _SectionTitle('Cover Letter'),
-                    _InfoCard(
+                  if (widget.application.coverLetter?.isNotEmpty == true) ...[
+                    const SizedBox(height: 16),
+                    _buildCvSection(
+                      icon: Icons.description_outlined,
+                      title: 'Cover Letter',
                       child: Text(widget.application.coverLetter!),
                     ),
-                    const SizedBox(height: 20),
-                  ],
-
-                  // CV link si lo tiene
-                  if (widget.application.cvUrl != null) ...[
-                    const _SectionTitle('CV'),
-                    _InfoCard(
-                      child: Row(
-                        children: [
-                          const Icon(Icons.picture_as_pdf, color: Colors.red),
-                          const SizedBox(width: 8),
-                          const Text('CV attached'),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('CV download coming soon')),
-                              );
-                            },
-                            child: const Text('View'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
                   ],
                 ],
               ),
@@ -445,80 +213,368 @@ class _TeacherProfileDetailScreenState
             label: const Text('Update Application Status'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
       ),
     );
   }
-}
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle(this.title);
+  Widget _buildHeader() {
+    final app = widget.application;
+    final profile = _profile;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade500, Colors.purple.shade500],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4))],
+            ),
+            child: CircleAvatar(
+              radius: 48,
+              backgroundColor: Colors.white,
+              child: app.teacherPhotoUrl != null
+                  ? ClipOval(
+                      child: Image.network(
+                        app.teacherPhotoUrl!,
+                        width: 96,
+                        height: 96,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _avatarLetter(),
+                      ),
+                    )
+                  : _avatarLetter(),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(app.teacherName,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 4),
+          if (app.teacherEmail != null)
+            Text(app.teacherEmail!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          const SizedBox(height: 8),
+          // Location + experience row
+          if (profile != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (profile.location != null) ...[
+                  const Icon(Icons.location_on, color: Colors.white70, size: 14),
+                  const SizedBox(width: 3),
+                  Text(profile.location!, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(width: 12),
+                ],
+                const Icon(Icons.work_outline, color: Colors.white70, size: 14),
+                const SizedBox(width: 3),
+                Text('${profile.yearsOfExperience} yrs experience',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          const SizedBox(height: 10),
+          // Native badge + LinkedIn row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (profile?.nativeSpeaker == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade300),
+                  ),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.record_voice_over, color: Colors.white, size: 13),
+                    SizedBox(width: 4),
+                    Text('Native Speaker', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
+              if (profile?.nativeSpeaker == true && profile?.linkedinUrl != null)
+                const SizedBox(width: 8),
+              if (profile?.linkedinUrl != null)
+                GestureDetector(
+                  onTap: () async {
+                    final url = Uri.tryParse(profile!.linkedinUrl!);
+                    if (url != null) await launchUrl(url, mode: LaunchMode.externalApplication);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white38),
+                    ),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.link, color: Colors.white, size: 13),
+                      SizedBox(width: 4),
+                      Text('LinkedIn', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ]),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _StatusBadge(status: app.status),
+        ],
       ),
     );
   }
-}
 
-class _InfoCard extends StatelessWidget {
-  final Widget child;
-  const _InfoCard({required this.child});
+  Widget _buildAppliedForCard() {
+    return _buildInfoCard(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.business_center_outlined, color: Theme.of(context).colorScheme.primary, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.application.jobTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 2),
+              Text(widget.application.institutionName, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildCertChips() {
+    if (_profile!.certifications.isEmpty) {
+      return Text('No certifications listed', style: TextStyle(color: Colors.grey.shade500, fontSize: 13));
+    }
+
+    Color certColor(CertificationType c) {
+      switch (c) {
+        case CertificationType.fce:
+        case CertificationType.cae:
+        case CertificationType.cpe:
+          return Colors.blue.shade600;
+        case CertificationType.celta:
+        case CertificationType.delta:
+          return Colors.green.shade600;
+        case CertificationType.tesol:
+        case CertificationType.tefl:
+          return Colors.orange.shade700;
+        case CertificationType.other:
+          return Colors.grey.shade600;
+      }
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _profile!.certifications.map((cert) {
+        final color = certColor(cert);
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Text(
+            cert.toString().split('.').last.toUpperCase(),
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildAvailabilityAndLevels() {
+    const shiftLabels = {
+      AvailabilityShift.morning: 'Morning',
+      AvailabilityShift.afternoon: 'Afternoon',
+      AvailabilityShift.evening: 'Evening',
+    };
+    const levelLabels = {
+      TeachingLevel.kinder: 'Kinder',
+      TeachingLevel.primary: 'Primary',
+      TeachingLevel.secondary: 'Secondary',
+      TeachingLevel.adult: 'Adult',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_profile!.availability.isNotEmpty) ...[
+          Text('Availability', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: _profile!.availability.map((s) => Chip(
+                  label: Text(shiftLabels[s]!, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: Colors.green.shade50,
+                  side: BorderSide(color: Colors.green.shade200),
+                )).toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (_profile!.preferredLevels.isNotEmpty) ...[
+          Text('Teaching Levels', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: _profile!.preferredLevels.map((l) => Chip(
+                  label: Text(levelLabels[l]!, style: const TextStyle(fontSize: 12)),
+                  backgroundColor: Colors.purple.shade50,
+                  side: BorderSide(color: Colors.purple.shade200),
+                )).toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildDocumentsSection() {
+    final cvUrl = widget.application.cvUrl ?? _profile?.cvUrl;
+    final certFiles = _profile?.certificationFiles ?? [];
+    final certNames = _profile?.certificationNames ?? [];
+
+    if (cvUrl == null && certFiles.isEmpty) return const SizedBox.shrink();
+
+    return _buildCvSection(
+      icon: Icons.attach_file,
+      title: 'Documents',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (cvUrl != null)
+            _DocumentRow(
+              icon: Icons.picture_as_pdf,
+              iconColor: Colors.red.shade700,
+              label: 'Curriculum Vitae',
+              onPreview: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DocumentPreviewScreen(
+                    url: cvUrl,
+                    title: 'CV',
+                    isImage: false,
+                  ),
+                ),
+              ),
+            ),
+          if (cvUrl != null && certFiles.isNotEmpty) const SizedBox(height: 8),
+          ...certFiles.asMap().entries.map((e) {
+            final idx = e.key;
+            final url = e.value;
+            final name = (idx < certNames.length && certNames[idx].isNotEmpty)
+                ? certNames[idx]
+                : 'Certification ${idx + 1}';
+            final isImage = DocumentPreviewScreen.urlIsImage(url);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _DocumentRow(
+                icon: isImage ? Icons.image : Icons.picture_as_pdf,
+                iconColor: isImage ? Colors.blue.shade600 : Colors.red.shade700,
+                label: name,
+                onPreview: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DocumentPreviewScreen(
+                      url: url,
+                      title: name,
+                      isImage: isImage,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCvSection({required IconData icon, required String title, required Widget child}) {
+    return _buildInfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 6),
+            Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({required Widget child}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: child,
     );
   }
+
+  Widget _avatarLetter() {
+    return Text(
+      widget.application.teacherName.isNotEmpty
+          ? widget.application.teacherName[0].toUpperCase()
+          : 'T',
+      style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+    );
+  }
 }
 
-class _InfoRow extends StatelessWidget {
+class _DocumentRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
   final String label;
-  final String value;
+  final VoidCallback onPreview;
 
-  const _InfoRow(this.label, this.value);
+  const _DocumentRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.onPreview,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 10),
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
+        TextButton.icon(
+          onPressed: onPreview,
+          icon: const Icon(Icons.visibility_outlined, size: 16),
+          label: const Text('Preview', style: TextStyle(fontSize: 13)),
+          style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4)),
+        ),
+      ],
     );
   }
 }
@@ -529,27 +585,19 @@ class _StatusBadge extends StatelessWidget {
 
   Color get _color {
     switch (status) {
-      case ApplicationStatus.pending:
-        return Colors.orange;
-      case ApplicationStatus.reviewed:
-        return Colors.blue;
-      case ApplicationStatus.accepted:
-        return Colors.green;
-      case ApplicationStatus.rejected:
-        return Colors.red;
+      case ApplicationStatus.pending: return Colors.orange;
+      case ApplicationStatus.reviewed: return Colors.blue;
+      case ApplicationStatus.accepted: return Colors.green;
+      case ApplicationStatus.rejected: return Colors.red;
     }
   }
 
   String get _label {
     switch (status) {
-      case ApplicationStatus.pending:
-        return 'Pending';
-      case ApplicationStatus.reviewed:
-        return 'Reviewed';
-      case ApplicationStatus.accepted:
-        return 'Accepted';
-      case ApplicationStatus.rejected:
-        return 'Rejected';
+      case ApplicationStatus.pending: return 'Pending';
+      case ApplicationStatus.reviewed: return 'Reviewed';
+      case ApplicationStatus.accepted: return 'Accepted';
+      case ApplicationStatus.rejected: return 'Rejected';
     }
   }
 
@@ -558,18 +606,11 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: _color.withOpacity(0.15),
+        color: _color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: _color),
       ),
-      child: Text(
-        _label,
-        style: TextStyle(
-          color: _color,
-          fontWeight: FontWeight.bold,
-          fontSize: 13,
-        ),
-      ),
+      child: Text(_label, style: TextStyle(color: _color, fontWeight: FontWeight.bold, fontSize: 13)),
     );
   }
 }

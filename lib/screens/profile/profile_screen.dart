@@ -6,8 +6,8 @@ import '../../models/app_user.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
 import 'edit_teacher_profile_screen.dart';
-import '../jobs/my_job_postings_screen.dart';
 import 'my_applications_screen.dart';
+import '../jobs/my_job_postings_screen.dart';
 import '../materials/materials_screen.dart';
 import '../login_screen.dart';
 
@@ -85,42 +85,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           // Profile header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.blue.shade400, Colors.purple.shade400],
               ),
             ),
-            child: Column(
+            child: Row(
               children: [
                 _buildProfileAvatar(photoUrl, user.displayName),
-                const SizedBox(height: 16),
-                Text(
-                  user.displayName,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.displayName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        user.email,
+                        style: const TextStyle(fontSize: 13, color: Colors.white70),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Chip(
+                        label: Text(
+                          user.userType.toString().split('.').last.toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                        ),
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Chip(
-                  label: Text(
-                    user.userType.toString().split('.').last.toUpperCase(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                  backgroundColor: Colors.white,
                 ),
               ],
             ),
@@ -151,8 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      MyApplicationsScreen(teacherId: user.uid),
+                  builder: (_) => MyApplicationsScreen(teacherId: user.uid),
                 ),
               ),
             ),
@@ -295,14 +302,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
       child: CircleAvatar(
-        radius: 50,
+        radius: 36,
         backgroundColor: Colors.white,
         child: photoUrl != null
             ? ClipOval(
                 child: Image.network(
                   photoUrl,
-                  width: 100,
-                  height: 100,
+                  width: 72,
+                  height: 72,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return _buildPlaceholderAvatar(displayName);
@@ -329,7 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Text(
       displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
       style: TextStyle(
-        fontSize: 40,
+        fontSize: 28,
         fontWeight: FontWeight.bold,
         color: Colors.blue.shade700,
       ),

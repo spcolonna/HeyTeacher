@@ -1,13 +1,25 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../providers/auth_provider.dart';
+
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../models/teacher_profile.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/firestore_wrapper.dart';
 import '../../services/storage_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'manage_documents_screen.dart';
+
+// Predefined teaching methodologies
+const _kMethodologies = [
+  'Communicative',
+  'Task-Based',
+  'Grammar-Translation',
+  'Content-Based',
+  'TPR',
+  'Blended Learning',
+];
 
 class EditTeacherProfileScreen extends StatefulWidget {
   const EditTeacherProfileScreen({super.key});
@@ -19,8 +31,8 @@ class EditTeacherProfileScreen extends StatefulWidget {
 
 class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final StorageService _storageService = StorageService();
-  final ImagePicker _picker = ImagePicker();
+  final _storageService = StorageService();
+  final _picker = ImagePicker();
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -30,15 +42,18 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   File? _selectedImage;
   String? _photoUrl;
 
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _bioController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _yearsController = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _bioCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
+  final _yearsCtrl = TextEditingController();
+  final _linkedinCtrl = TextEditingController();
 
   List<CertificationType> _selectedCertifications = [];
   List<AvailabilityShift> _selectedShifts = [];
   List<TeachingLevel> _selectedLevels = [];
+  List<String> _selectedMethodologies = [];
+  bool _nativeSpeaker = false;
 
   @override
   void initState() {
@@ -48,126 +63,116 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _bioController.dispose();
-    _locationController.dispose();
-    _yearsController.dispose();
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _bioCtrl.dispose();
+    _locationCtrl.dispose();
+    _yearsCtrl.dispose();
+    _linkedinCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _loadProfile() async {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (user == null) return;
-
     try {
-      DocumentSnapshot doc =
+      final doc =
           await FirestoreWrapper.getDocument('teacher_profiles', user.uid);
-
       if (doc.exists) {
         _profile = TeacherProfile.fromFirestore(doc);
-        _nameController.text = _profile!.fullName;
-        _phoneController.text = _profile!.phone ?? '';
-        _bioController.text = _profile!.bio ?? '';
-        _locationController.text = _profile!.location ?? '';
-        _yearsController.text = _profile!.yearsOfExperience.toString();
+        _nameCtrl.text = _profile!.fullName;
+        _phoneCtrl.text = _profile!.phone ?? '';
+        _bioCtrl.text = _profile!.bio ?? '';
+        _locationCtrl.text = _profile!.location ?? '';
+        _yearsCtrl.text = _profile!.yearsOfExperience.toString();
+        _linkedinCtrl.text = _profile!.linkedinUrl ?? '';
         _selectedCertifications = List.from(_profile!.certifications);
         _selectedShifts = List.from(_profile!.availability);
         _selectedLevels = List.from(_profile!.preferredLevels);
+        _selectedMethodologies = List.from(_profile!.teachingMethodologies);
+        _nativeSpeaker = _profile!.nativeSpeaker;
         _photoUrl = _profile!.photoUrl;
       } else {
-        _nameController.text = user.displayName;
+        _nameCtrl.text = user.displayName;
       }
     } catch (e) {
-      print('Error loading profile: $e');
+      debugPrint('Error loading profile: $e');
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
+  double get _completeness {
+    int score = 0;
+    if (_photoUrl != null || _selectedImage != null) score += 20;
+    if (_bioCtrl.text.trim().isNotEmpty) score += 15;
+    if (_locationCtrl.text.trim().isNotEmpty) score += 10;
+    if ((int.tryParse(_yearsCtrl.text) ?? 0) > 0) score += 10;
+    if (_selectedCertifications.isNotEmpty) score += 15;
+    if (_selectedShifts.isNotEmpty) score += 10;
+    if (_selectedLevels.isNotEmpty) score += 10;
+    if (_linkedinCtrl.text.trim().isNotEmpty) score += 10;
+    return score / 100;
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final XFile? image = await _picker.pickImage(
+      final img = await _picker.pickImage(
         source: source,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 85,
       );
-
-      if (image != null) {
-        setState(() {
-          _selectedImage = File(image.path);
-        });
-      }
+      if (img != null) setState(() => _selectedImage = File(img.path));
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
     }
   }
 
-  void _showImageSourceDialog() {
+  void _showImageSourceSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
+      builder: (ctx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Gallery'),
+            onTap: () { Navigator.pop(ctx); _pickImage(ImageSource.gallery); },
+          ),
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('Camera'),
+            onTap: () { Navigator.pop(ctx); _pickImage(ImageSource.camera); },
+          ),
+          if (_photoUrl != null || _selectedImage != null)
             ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Remove photo', style: TextStyle(color: Colors.red)),
               onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
+                Navigator.pop(ctx);
+                setState(() { _selectedImage = null; _photoUrl = null; });
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Camera'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            if (_photoUrl != null || _selectedImage != null)
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('Remove photo',
-                    style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(context);
-                  setState(() {
-                    _selectedImage = null;
-                    _photoUrl = null;
-                  });
-                },
-              ),
-          ],
-        ),
+        ]),
       ),
     );
   }
 
   Future<String?> _uploadPhoto() async {
     if (_selectedImage == null) return _photoUrl;
-
     setState(() => _isUploadingPhoto = true);
-
     try {
-      final user =
-          Provider.of<AuthProvider>(context, listen: false).currentUser;
+      final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
       if (user == null) return null;
-
-      String downloadUrl = await _storageService.uploadProfilePhoto(
+      return await _storageService.uploadProfilePhoto(
         file: _selectedImage!,
         userId: user.uid,
       );
-
-      return downloadUrl;
     } catch (e) {
-      print('Error uploading photo: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading photo: $e')),
-      );
       return null;
     } finally {
       setState(() => _isUploadingPhoto = false);
@@ -176,34 +181,39 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
 
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedShifts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one availability shift')),
+      );
+      return;
+    }
+    if (_selectedLevels.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one teaching level')),
+      );
+      return;
+    }
+
+    final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
+    if (user == null) return;
 
     setState(() => _isSaving = true);
-
     try {
-      // Upload photo first if there's a new one
-      String? uploadedPhotoUrl = await _uploadPhoto();
+      final uploadedPhotoUrl = await _uploadPhoto();
 
-      final user =
-          Provider.of<AuthProvider>(context, listen: false).currentUser;
-      if (user == null) return;
-
-      int years = int.tryParse(_yearsController.text) ?? 0;
-
-      final updatedProfile = TeacherProfile(
+      final updated = TeacherProfile(
         uid: user.uid,
-        fullName: _nameController.text.trim(),
-        phone: _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-        bio: _bioController.text.trim().isEmpty
-            ? null
-            : _bioController.text.trim(),
-        location: _locationController.text.trim().isEmpty
-            ? null
-            : _locationController.text.trim(),
-        yearsOfExperience: years,
+        fullName: _nameCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+        bio: _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim(),
+        location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+        linkedinUrl: _linkedinCtrl.text.trim().isEmpty ? null : _linkedinCtrl.text.trim(),
+        nativeSpeaker: _nativeSpeaker,
+        yearsOfExperience: int.tryParse(_yearsCtrl.text) ?? 0,
         certifications: _selectedCertifications,
         certificationFiles: _profile?.certificationFiles ?? [],
+        certificationNames: _profile?.certificationNames ?? [],
+        teachingMethodologies: _selectedMethodologies,
         availability: _selectedShifts,
         preferredLevels: _selectedLevels,
         cvUrl: _profile?.cvUrl,
@@ -211,344 +221,108 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         updatedAt: DateTime.now(),
       );
 
-      await FirestoreWrapper.setDocument(
-        'teacher_profiles',
-        user.uid,
-        updatedProfile.toMap(),
-      );
+      await FirestoreWrapper.setDocument('teacher_profiles', user.uid, updated.toMap());
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
+          const SnackBar(content: Text('Profile updated'), backgroundColor: Colors.green),
         );
         Navigator.pop(context);
       }
     } catch (e) {
-      print('Error saving profile: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving profile: $e')),
+          SnackBar(content: Text('Error saving profile: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    final primary = Theme.of(context).colorScheme.primary;
+    final busy = _isSaving || _isUploadingPhoto;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
         actions: [
-          if (_isSaving || _isUploadingPhoto)
+          if (busy)
             const Center(
               child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+                padding: EdgeInsets.all(16),
+                child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
               ),
             )
           else
-            TextButton(
-              onPressed: _saveProfile,
-              child: const Text('Save'),
-            ),
+            TextButton(onPressed: _saveProfile, child: const Text('Save')),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 40),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Profile Photo Section
-              Center(
-                child: Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: _showImageSourceDialog,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey.shade200,
-                          border: Border.all(
-                            color: Theme.of(context).primaryColor,
-                            width: 3,
-                          ),
-                        ),
-                        child: ClipOval(
-                          child: _selectedImage != null
-                              ? Image.file(
-                                  _selectedImage!,
-                                  fit: BoxFit.cover,
-                                )
-                              : _photoUrl != null
-                                  ? Image.network(
-                                      _photoUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) {
-                                        return _buildPlaceholderAvatar();
-                                      },
-                                    )
-                                  : _buildPlaceholderAvatar(),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceDialog,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton.icon(
-                  onPressed: _showImageSourceDialog,
-                  icon: const Icon(Icons.edit, size: 16),
-                  label: Text(
-                    (_photoUrl != null || _selectedImage != null)
-                        ? 'Change photo'
-                        : 'Add photo',
-                  ),
-                ),
-              ),
+              _buildPhotoSection(primary),
+              const SizedBox(height: 16),
+              _buildCompletenessBar(primary),
               const SizedBox(height: 24),
-
-              // Basic Info Section
-              _buildSectionTitle('Basic Information'),
-              const SizedBox(height: 12),
-
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name *',
-                  prefixIcon: Icon(Icons.person),
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your full name';
-                  }
-                  return null;
-                },
+              _buildSection(
+                icon: Icons.person_outline,
+                title: 'Personal Information',
+                child: _buildPersonalFields(),
               ),
               const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone),
-                  border: OutlineInputBorder(),
-                  hintText: '+598 XX XXX XXX',
-                ),
-                keyboardType: TextInputType.phone,
+              _buildSection(
+                icon: Icons.notes,
+                title: 'About Me',
+                child: _buildBioField(),
               ),
               const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  prefixIcon: Icon(Icons.location_on),
-                  border: OutlineInputBorder(),
-                  hintText: 'e.g., Montevideo',
-                ),
+              _buildSection(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Certifications & Methodology',
+                child: _buildCertificationsFields(),
               ),
               const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _yearsController,
-                decoration: const InputDecoration(
-                  labelText: 'Years of Experience *',
-                  prefixIcon: Icon(Icons.work),
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter years of experience';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
-                  return null;
-                },
+              _buildSection(
+                icon: Icons.schedule_outlined,
+                title: 'Availability',
+                child: _buildAvailabilityField(),
               ),
               const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _bioController,
-                decoration: const InputDecoration(
-                  labelText: 'Bio',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
-                  hintText: 'Tell us about yourself...',
-                ),
-                maxLines: 4,
-                maxLength: 500,
+              _buildSection(
+                icon: Icons.school_outlined,
+                title: 'Teaching Levels',
+                child: _buildLevelsField(),
               ),
-              const SizedBox(height: 24),
-
-              // Certifications Section
-              _buildSectionTitle('Certifications'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: CertificationType.values.map((cert) {
-                  final isSelected = _selectedCertifications.contains(cert);
-                  return FilterChip(
-                    label: Text(cert.toString().split('.').last),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedCertifications.add(cert);
-                        } else {
-                          _selectedCertifications.remove(cert);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
+              const SizedBox(height: 16),
+              _buildSection(
+                icon: Icons.folder_outlined,
+                title: 'Documents',
+                child: _buildDocumentsButton(),
               ),
-              const SizedBox(height: 24),
-
-              // Availability Section
-              _buildSectionTitle('Availability *'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: AvailabilityShift.values.map((shift) {
-                  final isSelected = _selectedShifts.contains(shift);
-                  return FilterChip(
-                    label: Text(shift.toString().split('.').last),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedShifts.add(shift);
-                        } else {
-                          _selectedShifts.remove(shift);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              if (_selectedShifts.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Please select at least one shift',
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 24),
-
-              // Teaching Levels Section
-              _buildSectionTitle('Preferred Teaching Levels *'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: TeachingLevel.values.map((level) {
-                  final isSelected = _selectedLevels.contains(level);
-                  return FilterChip(
-                    label: Text(level.toString().split('.').last),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedLevels.add(level);
-                        } else {
-                          _selectedLevels.remove(level);
-                        }
-                      });
-                    },
-                  );
-                }).toList(),
-              ),
-              if (_selectedLevels.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Please select at least one level',
-                    style: TextStyle(color: Colors.red.shade700, fontSize: 12),
-                  ),
-                ),
-              const SizedBox(height: 24),
-
-              // Documents Section
-              _buildSectionTitle('Documents'),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ManageDocumentsScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.folder),
-                label: const Text('Manage CV & Certifications'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Save Button (duplicate at bottom for convenience)
+              const SizedBox(height: 28),
               ElevatedButton(
-                onPressed:
-                    (_isSaving || _isUploadingPhoto) ? null : _saveProfile,
+                onPressed: busy ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.all(16),
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: _isSaving || _isUploadingPhoto
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Save Profile',
-                        style: TextStyle(fontSize: 16)),
+                child: busy
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Save Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
-              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -556,24 +330,371 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
+  Widget _buildPhotoSection(Color primary) {
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _showImageSourceSheet,
+            child: Stack(
+              children: [
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.shade200,
+                    border: Border.all(color: primary, width: 3),
+                  ),
+                  child: ClipOval(
+                    child: _selectedImage != null
+                        ? Image.file(_selectedImage!, fit: BoxFit.cover)
+                        : _photoUrl != null
+                            ? Image.network(_photoUrl!, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _avatarPlaceholder())
+                            : _avatarPlaceholder(),
+                  ),
+                ),
+                Positioned(
+                  bottom: 2,
+                  right: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _showImageSourceSheet,
+            child: Text(
+              (_photoUrl != null || _selectedImage != null) ? 'Change photo' : 'Add photo',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPlaceholderAvatar() {
+  Widget _buildCompletenessBar(Color primary) {
+    final pct = (_completeness * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Profile completeness', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            Text('$pct%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: _completeness,
+            minHeight: 6,
+            backgroundColor: Colors.grey.shade200,
+            valueColor: AlwaysStoppedAnimation<Color>(
+              _completeness < 0.5 ? Colors.orange : _completeness < 0.8 ? Colors.amber : Colors.green,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSection({required IconData icon, required String title, required Widget child}) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPersonalFields() {
+    return Column(
+      children: [
+        TextFormField(
+          controller: _nameCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Full Name *',
+            prefixIcon: Icon(Icons.person),
+            border: OutlineInputBorder(),
+          ),
+          textCapitalization: TextCapitalization.words,
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _phoneCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Phone Number',
+            prefixIcon: Icon(Icons.phone_outlined),
+            border: OutlineInputBorder(),
+            hintText: '+598 XX XXX XXX',
+          ),
+          keyboardType: TextInputType.phone,
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _locationCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Location',
+            prefixIcon: Icon(Icons.location_on_outlined),
+            border: OutlineInputBorder(),
+            hintText: 'e.g., Montevideo',
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _yearsCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Years of Experience *',
+            prefixIcon: Icon(Icons.work_outline),
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.number,
+          validator: (v) {
+            if (v == null || v.trim().isEmpty) return 'Required';
+            if (int.tryParse(v) == null) return 'Enter a valid number';
+            return null;
+          },
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 14),
+        TextFormField(
+          controller: _linkedinCtrl,
+          decoration: InputDecoration(
+            labelText: 'LinkedIn URL',
+            prefixIcon: const Icon(Icons.link),
+            border: const OutlineInputBorder(),
+            hintText: 'https://linkedin.com/in/...',
+            suffixIcon: _linkedinCtrl.text.trim().isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.open_in_new, size: 18),
+                    onPressed: () async {
+                      final url = Uri.tryParse(_linkedinCtrl.text.trim());
+                      if (url != null) await launchUrl(url, mode: LaunchMode.externalApplication);
+                    },
+                  )
+                : null,
+          ),
+          keyboardType: TextInputType.url,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Native English speaker'),
+          subtitle: Text(
+            _nativeSpeaker ? 'Yes, English is my native language' : 'No, English is not my native language',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          value: _nativeSpeaker,
+          onChanged: (v) => setState(() => _nativeSpeaker = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBioField() {
+    final len = _bioCtrl.text.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        TextFormField(
+          controller: _bioCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Professional summary',
+            border: OutlineInputBorder(),
+            hintText: 'Describe your teaching experience, style, and what makes you stand out...',
+            alignLabelWithHint: true,
+          ),
+          maxLines: 5,
+          maxLength: 500,
+          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 4),
+        Text('$len / 500', style: TextStyle(fontSize: 11, color: len > 450 ? Colors.orange : Colors.grey.shade500)),
+      ],
+    );
+  }
+
+  Widget _buildCertificationsFields() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Cambridge & International', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: CertificationType.values.map((cert) {
+            final selected = _selectedCertifications.contains(cert);
+            return FilterChip(
+              label: Text(cert.toString().split('.').last.toUpperCase()),
+              selected: selected,
+              onSelected: (v) {
+                setState(() {
+                  if (v) { _selectedCertifications.add(cert); } else { _selectedCertifications.remove(cert); }
+                });
+              },
+              selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              checkmarkColor: Theme.of(context).colorScheme.primary,
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+        Text('Teaching Methodology', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _kMethodologies.map((m) {
+            final selected = _selectedMethodologies.contains(m);
+            return FilterChip(
+              label: Text(m),
+              selected: selected,
+              onSelected: (v) {
+                setState(() {
+                  if (v) { _selectedMethodologies.add(m); } else { _selectedMethodologies.remove(m); }
+                });
+              },
+              selectedColor: Colors.teal.withValues(alpha: 0.15),
+              checkmarkColor: Colors.teal,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAvailabilityField() {
+    const labels = {
+      AvailabilityShift.morning: 'Morning',
+      AvailabilityShift.afternoon: 'Afternoon',
+      AvailabilityShift.evening: 'Evening',
+    };
+    const icons = {
+      AvailabilityShift.morning: Icons.wb_sunny_outlined,
+      AvailabilityShift.afternoon: Icons.wb_cloudy_outlined,
+      AvailabilityShift.evening: Icons.nights_stay_outlined,
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: AvailabilityShift.values.map((shift) {
+            final selected = _selectedShifts.contains(shift);
+            return FilterChip(
+              avatar: Icon(icons[shift], size: 16, color: selected ? Theme.of(context).colorScheme.primary : Colors.grey),
+              label: Text(labels[shift]!),
+              selected: selected,
+              onSelected: (v) {
+                setState(() {
+                  if (v) { _selectedShifts.add(shift); } else { _selectedShifts.remove(shift); }
+                });
+              },
+              selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+              checkmarkColor: Theme.of(context).colorScheme.primary,
+            );
+          }).toList(),
+        ),
+        if (_selectedShifts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Select at least one shift', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLevelsField() {
+    const labels = {
+      TeachingLevel.kinder: 'Kinder',
+      TeachingLevel.primary: 'Primary',
+      TeachingLevel.secondary: 'Secondary',
+      TeachingLevel.adult: 'Adult',
+    };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: TeachingLevel.values.map((level) {
+            final selected = _selectedLevels.contains(level);
+            return FilterChip(
+              label: Text(labels[level]!),
+              selected: selected,
+              onSelected: (v) {
+                setState(() {
+                  if (v) { _selectedLevels.add(level); } else { _selectedLevels.remove(level); }
+                });
+              },
+              selectedColor: Colors.purple.withValues(alpha: 0.15),
+              checkmarkColor: Colors.purple,
+            );
+          }).toList(),
+        ),
+        if (_selectedLevels.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Select at least one level', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentsButton() {
+    return OutlinedButton.icon(
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ManageDocumentsScreen()),
+      ),
+      icon: const Icon(Icons.folder_open_outlined),
+      label: const Text('Manage CV & Certifications'),
+      style: OutlinedButton.styleFrom(padding: const EdgeInsets.all(14)),
+    );
+  }
+
+  Widget _avatarPlaceholder() {
     return Container(
       color: Colors.grey.shade300,
-      child: Icon(
-        Icons.person,
-        size: 60,
-        color: Colors.grey.shade600,
-      ),
+      child: Icon(Icons.person, size: 54, color: Colors.grey.shade600),
     );
   }
 }

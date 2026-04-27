@@ -35,6 +35,9 @@ dependencies:
   url_launcher: ^6.2.2
   qr_flutter: ^4.1.0
   
+  # PDF/Image in-app preview
+  webview_flutter: ^4.10.0
+
   # Google Sign-In & Calendar API
   google_sign_in: ^6.2.1
   googleapis: ^13.2.0
