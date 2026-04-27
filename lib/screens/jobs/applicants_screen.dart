@@ -95,7 +95,6 @@ class _ApplicantCard extends StatelessWidget {
   final Function(ApplicationStatus, String?) onStatusChanged;
 
   const _ApplicantCard({
-    super.key,
     required this.application,
     required this.onTap,
     required this.onStatusChanged,

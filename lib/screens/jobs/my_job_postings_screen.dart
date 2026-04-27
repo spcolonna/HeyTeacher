@@ -136,7 +136,6 @@ class _JobPostingCard extends StatelessWidget {
   final VoidCallback onDelete;
 
   const _JobPostingCard({
-    super.key,
     required this.job,
     required this.onViewApplicants,
     required this.onToggleStatus,

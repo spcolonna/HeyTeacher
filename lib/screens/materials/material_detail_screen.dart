@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/teaching_material.dart';
-import '../../models/teacher_profile.dart';
 import '../../services/material_service.dart';
 
 class MaterialDetailScreen extends StatelessWidget {

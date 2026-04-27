@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import '../../providers/auth_provider.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';

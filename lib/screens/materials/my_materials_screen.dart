@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/teaching_material.dart';
-import '../../models/teacher_profile.dart';
 import '../../services/material_service.dart';
 import '../materials/upload_material_screen.dart';
 import '../materials/material_detail_screen.dart';

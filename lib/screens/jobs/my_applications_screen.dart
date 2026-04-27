@@ -64,7 +64,7 @@ class MyApplicationsScreen extends StatelessWidget {
 class _ApplicationCard extends StatelessWidget {
   final JobApplication application;
 
-  const _ApplicationCard({super.key, required this.application});
+  const _ApplicationCard({required this.application});
 
   Color _getStatusColor(ApplicationStatus status) {
     switch (status) {
