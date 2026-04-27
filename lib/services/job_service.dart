@@ -83,6 +83,12 @@ class JobService {
     });
   }
 
+  Future<JobPosting?> getJobById(String jobId) async {
+    final doc = await _firestore.collection('jobs').doc(jobId).get();
+    if (!doc.exists) return null;
+    return JobPosting.fromFirestore(doc);
+  }
+
   // Apply to a job — ahora recibe jobTitle, institutionName y teacherPhotoUrl
   Future<void> applyToJob({
     required String jobId,

@@ -6,7 +6,8 @@ import '../../models/app_user.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
 import 'edit_teacher_profile_screen.dart';
-import '../jobs/my_job_postings_screen.dart'; // ← CAMBIADO: era jobs_screen.dart
+import '../jobs/my_job_postings_screen.dart';
+import 'my_applications_screen.dart';
 import '../materials/materials_screen.dart';
 import '../login_screen.dart';
 
@@ -147,12 +148,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context,
               icon: Icons.work,
               title: 'My Applications',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('My Applications - Coming soon')),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      MyApplicationsScreen(teacherId: user.uid),
+                ),
+              ),
             ),
             _buildMenuItem(
               context,
