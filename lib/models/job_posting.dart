@@ -19,7 +19,8 @@ class JobPosting {
   final DateTime? expiresAt;
   final JobStatus status;
   final int applicationsCount;
-  
+  final int viewsCount;
+
   JobPosting({
     required this.id,
     required this.postedBy,
@@ -36,6 +37,7 @@ class JobPosting {
     this.expiresAt,
     this.status = JobStatus.active,
     this.applicationsCount = 0,
+    this.viewsCount = 0,
   });
   
   factory JobPosting.fromFirestore(DocumentSnapshot doc) {
@@ -74,6 +76,7 @@ class JobPosting {
         orElse: () => JobStatus.active,
       ),
       applicationsCount: data['applicationsCount'] ?? 0,
+      viewsCount: data['viewsCount'] ?? 0,
     );
   }
   
@@ -93,6 +96,7 @@ class JobPosting {
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'status': status.toString().split('.').last,
       'applicationsCount': applicationsCount,
+      'viewsCount': viewsCount,
     };
   }
 }

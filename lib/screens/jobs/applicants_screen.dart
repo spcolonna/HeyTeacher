@@ -78,6 +78,9 @@ class ApplicantsScreen extends StatelessWidget {
                     applicationId: app.id,
                     status: status,
                     notes: notes,
+                    teacherId: app.teacherId,
+                    jobTitle: app.jobTitle,
+                    institutionName: app.institutionName,
                   );
                 },
               );

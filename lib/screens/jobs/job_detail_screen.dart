@@ -19,6 +19,12 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
   final JobService _jobService = JobService();
   bool _isApplying = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _jobService.incrementJobViews(widget.job.id);
+  }
+
   Future<void> _applyToJob() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
@@ -31,6 +37,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         jobId: widget.job.id,
         jobTitle: widget.job.jobTitle,
         institutionName: widget.job.institutionName,
+        institutionId: widget.job.postedBy,
         teacherId: user.uid,
         teacherName: user.displayName,
         teacherEmail: user.email,

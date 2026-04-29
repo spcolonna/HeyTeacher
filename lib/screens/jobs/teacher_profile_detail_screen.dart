@@ -88,6 +88,9 @@ class _TeacherProfileDetailScreenState
                   applicationId: widget.application.id,
                   status: selectedStatus,
                   notes: notesCtrl.text.trim(),
+                  teacherId: widget.application.teacherId,
+                  jobTitle: widget.application.jobTitle,
+                  institutionName: widget.application.institutionName,
                 );
                 if (ctx.mounted) {
                   Navigator.pop(ctx);

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../services/notification_service.dart';
 import 'jobs/jobs_screen.dart';
 import 'materials/materials_screen.dart';
 import 'marketplace/marketplace_screen.dart';
@@ -17,6 +20,27 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  int _unreadNotifications = 0;
+  StreamSubscription<int>? _unreadSub;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid =
+        Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+    if (uid != null) {
+      _unreadSub =
+          NotificationService().getUnreadNotificationCount(uid).listen((count) {
+        if (mounted) setState(() => _unreadNotifications = count);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _unreadSub?.cancel();
+    super.dispose();
+  }
 
   static const _navItems = [
     _NavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
@@ -117,18 +141,47 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              isSelected
-                                  ? _navItems[index].activeIcon
-                                  : _navItems[index].icon,
-                              key: ValueKey(isSelected),
-                              color: isSelected
-                                  ? primary
-                                  : Colors.blueGrey.shade300,
-                              size: 24,
-                            ),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  isSelected
+                                      ? _navItems[index].activeIcon
+                                      : _navItems[index].icon,
+                                  key: ValueKey(isSelected),
+                                  color: isSelected
+                                      ? primary
+                                      : Colors.blueGrey.shade300,
+                                  size: 24,
+                                ),
+                              ),
+                              if (index == 4 && _unreadNotifications > 0)
+                                Positioned(
+                                  top: -4,
+                                  right: -6,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    constraints: const BoxConstraints(
+                                        minWidth: 16, minHeight: 16),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      _unreadNotifications > 9
+                                          ? '9+'
+                                          : '$_unreadNotifications',
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 3),
                           AnimatedDefaultTextStyle(

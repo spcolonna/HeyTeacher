@@ -4,6 +4,7 @@ import '../models/job_posting.dart';
 import '../models/job_application.dart';
 import '../models/teacher_profile.dart';
 import 'firestore_wrapper.dart';
+import 'notification_service.dart';
 
 class JobService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -89,15 +90,16 @@ class JobService {
     return JobPosting.fromFirestore(doc);
   }
 
-  // Apply to a job — ahora recibe jobTitle, institutionName y teacherPhotoUrl
+  // Apply to a job
   Future<void> applyToJob({
     required String jobId,
     required String jobTitle,
     required String institutionName,
+    required String institutionId,
     required String teacherId,
     required String teacherName,
     String? teacherEmail,
-    String? teacherPhotoUrl,  // ← AGREGADO
+    String? teacherPhotoUrl,
     String? cvUrl,
     String? coverLetter,
   }) async {
@@ -117,7 +119,7 @@ class JobService {
         teacherId: teacherId,
         teacherName: teacherName,
         teacherEmail: teacherEmail,
-        teacherPhotoUrl: teacherPhotoUrl,  // ← AGREGADO
+        teacherPhotoUrl: teacherPhotoUrl,
         cvUrl: cvUrl,
         coverLetter: coverLetter,
         appliedAt: DateTime.now(),
@@ -126,6 +128,13 @@ class JobService {
       await FirestoreWrapper.updateDocument('jobs', jobId, {
         'applicationsCount': FieldValue.increment(1),
       });
+      NotificationService().createNotification(
+        userId: institutionId,
+        title: 'New application received',
+        body: '$teacherName applied for "$jobTitle"',
+        type: 'new_application',
+        data: {'jobId': jobId, 'jobTitle': jobTitle, 'teacherName': teacherName},
+      );
     } catch (e, stackTrace) {
       print('Error applying to job: $e');
       print('Stack trace: $stackTrace');
@@ -162,17 +171,38 @@ class JobService {
     required String applicationId,
     required ApplicationStatus status,
     String? notes,
+    String? teacherId,
+    String? jobTitle,
+    String? institutionName,
   }) async {
     try {
-      Map<String, dynamic> updates = {
+      final Map<String, dynamic> updates = {
         'status': status.toString().split('.').last,
       };
-
-      if (notes != null) {
-        updates['institutionNotes'] = notes;
-      }
+      if (notes != null) updates['institutionNotes'] = notes;
 
       await _firestore.collection('applications').doc(applicationId).update(updates);
+
+      if (teacherId != null && jobTitle != null) {
+        final statusLabel = status.toString().split('.').last;
+        final emoji = status == ApplicationStatus.accepted
+            ? '🎉'
+            : status == ApplicationStatus.rejected
+                ? '😔'
+                : 'ℹ️';
+        NotificationService().createNotification(
+          userId: teacherId,
+          title: '$emoji Application $statusLabel',
+          body: 'Your application for "$jobTitle"${institutionName != null ? ' at $institutionName' : ''} was marked as $statusLabel.',
+          type: 'status_update',
+          data: {
+            'applicationId': applicationId,
+            'jobTitle': jobTitle,
+            'institutionName': institutionName,
+            'status': statusLabel,
+          },
+        );
+      }
     } catch (e) {
       print('Error updating application status: $e');
       rethrow;
@@ -188,6 +218,16 @@ class JobService {
     } catch (e) {
       print('Error updating job status: $e');
       rethrow;
+    }
+  }
+
+  Future<void> incrementJobViews(String jobId) async {
+    try {
+      await _firestore.collection('jobs').doc(jobId).update({
+        'viewsCount': FieldValue.increment(1),
+      });
+    } catch (_) {
+      // Non-critical metric — silently ignore permission or network errors
     }
   }
 

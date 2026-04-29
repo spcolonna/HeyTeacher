@@ -6,7 +6,9 @@ import '../../models/app_user.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
 import 'edit_teacher_profile_screen.dart';
+import 'edit_institution_profile_screen.dart';
 import 'my_applications_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../jobs/my_job_postings_screen.dart';
 import '../materials/materials_screen.dart';
 import '../login_screen.dart';
@@ -182,13 +184,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               context,
               icon: Icons.person,
               title: 'Edit Profile',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content:
-                          Text('Institution profile editing - Coming soon')),
-                );
-              },
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const EditInstitutionProfileScreen()),
+              ),
             ),
             _buildMenuItem(
               context,
@@ -219,6 +219,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
 
           // Common menu items
+          _buildMenuItem(
+            context,
+            icon: Icons.notifications_outlined,
+            title: 'Notifications',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            ),
+          ),
+
           _buildMenuItem(
             context,
             icon: Icons.help_outline,
