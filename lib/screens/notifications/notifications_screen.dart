@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/notification_service.dart';
 import '../jobs/my_job_postings_screen.dart';
 import '../profile/my_applications_screen.dart';
+import '../teacher/my_institutions_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -112,6 +113,8 @@ class _NotificationTile extends StatelessWidget {
         return Icons.person_add_outlined;
       case 'status_update':
         return Icons.update_outlined;
+      case 'staff_request':
+        return Icons.apartment_outlined;
       default:
         return Icons.notifications_outlined;
     }
@@ -123,6 +126,8 @@ class _NotificationTile extends StatelessWidget {
         return Colors.blue.shade600;
       case 'status_update':
         return Colors.purple.shade600;
+      case 'staff_request':
+        return Colors.teal.shade600;
       default:
         return Colors.grey.shade600;
     }
@@ -151,6 +156,10 @@ class _NotificationTile extends StatelessWidget {
             context,
             MaterialPageRoute(
                 builder: (_) => MyApplicationsScreen(teacherId: userId)));
+        break;
+      case 'staff_request':
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const MyInstitutionsScreen()));
         break;
     }
   }

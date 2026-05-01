@@ -11,7 +11,14 @@ import '../../services/material_service.dart';
 import '../../services/storage_service.dart';
 
 class UploadMaterialScreen extends StatefulWidget {
-  const UploadMaterialScreen({super.key});
+  final String? institutionId;
+  final String? institutionName;
+
+  const UploadMaterialScreen({
+    super.key,
+    this.institutionId,
+    this.institutionName,
+  });
 
   @override
   State<UploadMaterialScreen> createState() => _UploadMaterialScreenState();
@@ -77,43 +84,21 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
   Future<void> _uploadMaterial() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_fileName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select a file'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    if (kIsWeb && _selectedFileBytes == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select a file'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
-    if (!kIsWeb && _selectedFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please select a file'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (user == null) return;
 
     setState(() => _isUploading = true);
 
     try {
-      // Upload file - funciona tanto en web como en móvil
-      String fileUrl = await _storageService.uploadTeachingMaterial(
-        file: _selectedFile,
-        bytes: _selectedFileBytes,
-        userId: user.uid,
-        originalFileName: _fileName!,
-      );
+      String? fileUrl;
+      if (_fileName != null) {
+        fileUrl = await _storageService.uploadTeachingMaterial(
+          file: _selectedFile,
+          bytes: _selectedFileBytes,
+          userId: user.uid,
+          originalFileName: _fileName!,
+        );
+      }
 
       // Parse tags
       List<String> tags = _tagsController.text
@@ -134,6 +119,8 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
         uploaderName: user.displayName,
         uploadedAt: DateTime.now(),
         tags: tags,
+        institutionId: widget.institutionId,
+        institutionName: widget.institutionName,
       );
 
       await _materialService.uploadMaterial(material);
@@ -176,8 +163,7 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Upload',
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
+                : const Text('Upload', style: TextStyle(fontSize: 16)),
           ),
         ],
       ),

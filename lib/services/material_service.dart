@@ -28,6 +28,38 @@ class MaterialService {
             .toList());
   }
 
+  // Returns public materials + materials from the given institution IDs.
+  // Two Firestore queries merged client-side (Firestore has no OR across fields).
+  Stream<List<TeachingMaterial>> getMaterialsForUser(
+      List<String> institutionIds) {
+    // Public materials (no institutionId)
+    final publicStream = FirestoreWrapper.query('materials')
+        .where('institutionId', isNull: true)
+        .orderBy('uploadedAt', descending: true)
+        .snapshots()
+        .handleError((e) => print('🔥 FIRESTORE INDEX NEEDED: $e'))
+        .map((s) =>
+            s.docs.map((d) => TeachingMaterial.fromFirestore(d)).toList());
+
+    if (institutionIds.isEmpty) return publicStream;
+
+    // Institution-specific materials (whereIn supports up to 10 values)
+    final instStream = FirestoreWrapper.query('materials')
+        .where('institutionId', whereIn: institutionIds.take(10).toList())
+        .orderBy('uploadedAt', descending: true)
+        .snapshots()
+        .handleError((e) => print('🔥 FIRESTORE INDEX NEEDED: $e'))
+        .map((s) =>
+            s.docs.map((d) => TeachingMaterial.fromFirestore(d)).toList());
+
+    // Combine both streams
+    return publicStream.asyncExpand((pub) => instStream.map((inst) {
+          final all = [...pub, ...inst];
+          all.sort((a, b) => b.uploadedAt.compareTo(a.uploadedAt));
+          return all;
+        }));
+  }
+
   // Get materials by category
   Stream<List<TeachingMaterial>> getMaterialsByCategory(
       MaterialCategory category) {

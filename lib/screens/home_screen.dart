@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/app_user.dart';
 import '../providers/auth_provider.dart';
 import '../services/notification_service.dart';
 import 'jobs/jobs_screen.dart';
@@ -9,6 +10,7 @@ import 'materials/materials_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import 'classroom/classroom_screen.dart';
+import 'institution/manage_staff_screen.dart';
 import '../widgets/sponsor_banner.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -42,24 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  static const _navItems = [
-    _NavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
-    _NavItem(
-        icon: Icons.folder_outlined,
-        activeIcon: Icons.folder,
-        label: 'Materials'),
-    _NavItem(
-        icon: Icons.card_giftcard_outlined,
-        activeIcon: Icons.card_giftcard,
-        label: 'Benefits'),
-    _NavItem(
-        icon: Icons.school_outlined,
-        activeIcon: Icons.school,
-        label: 'Classroom'),
-    _NavItem(
-        icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -71,11 +55,24 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    final isInstitution = user.userType == UserType.institution;
+
+    final navItems = [
+      const _NavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
+      const _NavItem(icon: Icons.folder_outlined, activeIcon: Icons.folder, label: 'Materials'),
+      const _NavItem(icon: Icons.card_giftcard_outlined, activeIcon: Icons.card_giftcard, label: 'Benefits'),
+      if (isInstitution)
+        const _NavItem(icon: Icons.group_work_outlined, activeIcon: Icons.group_work, label: 'Staff')
+      else
+        const _NavItem(icon: Icons.school_outlined, activeIcon: Icons.school, label: 'Classroom'),
+      const _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
+    ];
+
     final List<Widget> screens = [
       const JobsScreen(),
       const MaterialsScreen(),
       const MarketplaceScreen(),
-      const ClassroomScreen(),
+      if (isInstitution) const ManageStaffScreen() else const ClassroomScreen(),
       const ProfileScreen(),
     ];
 
@@ -120,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(_navItems.length, (index) {
+                children: List.generate(navItems.length, (index) {
                   final isSelected = _selectedIndex == index;
                   return GestureDetector(
                     onTap: () => setState(() => _selectedIndex = index),
@@ -148,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 duration: const Duration(milliseconds: 200),
                                 child: Icon(
                                   isSelected
-                                      ? _navItems[index].activeIcon
-                                      : _navItems[index].icon,
+                                      ? navItems[index].activeIcon
+                                      : navItems[index].icon,
                                   key: ValueKey(isSelected),
                                   color: isSelected
                                       ? primary
@@ -196,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   : Colors.blueGrey.shade300,
                               letterSpacing: isSelected ? 0.2 : 0,
                             ),
-                            child: Text(_navItems[index].label),
+                            child: Text(navItems[index].label),
                           ),
                         ],
                       ),

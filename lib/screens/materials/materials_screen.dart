@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/institution_staff.dart';
 import '../../models/teaching_material.dart';
 import '../../models/app_user.dart';
 import '../../services/material_service.dart';
+import '../../services/staff_service.dart';
 import '../../providers/auth_provider.dart';
 import 'upload_material_screen.dart';
 import 'material_detail_screen.dart';
@@ -17,23 +21,64 @@ class MaterialsScreen extends StatefulWidget {
 class _MaterialsScreenState extends State<MaterialsScreen> {
   final MaterialService _materialService = MaterialService();
   MaterialCategory? _selectedCategory;
+  List<String> _institutionIds = [];
+  StreamSubscription<List<InstitutionStaff>>? _staffSub;
+
+  @override
+  void initState() {
+    super.initState();
+    final user =
+        Provider.of<AuthProvider>(context, listen: false).currentUser;
+    if (user != null && user.userType == UserType.teacher) {
+      _staffSub = StaffService()
+          .getInstitutionsForTeacher(user.uid)
+          .listen(
+        (list) {
+          final ids = list
+              .where((s) => s.status == StaffStatus.accepted)
+              .map((s) => s.institutionId)
+              .toList();
+          if (mounted) setState(() => _institutionIds = ids);
+        },
+        onError: (e) => print('🔥 Staff sub error: $e'),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _staffSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).currentUser;
+    final canUpload = user?.userType == UserType.teacher ||
+        user?.userType == UserType.institution;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Teacher's Toolbox"),
         actions: [
-          if (user?.userType == UserType.teacher)
+          if (canUpload)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () {
+                final institutionId = user?.userType == UserType.institution
+                    ? user?.uid
+                    : null;
+                final institutionName =
+                    user?.userType == UserType.institution
+                        ? user?.displayName
+                        : null;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const UploadMaterialScreen(),
+                    builder: (_) => UploadMaterialScreen(
+                      institutionId: institutionId,
+                      institutionName: institutionName,
+                    ),
                   ),
                 );
               },
@@ -64,9 +109,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           // Materials grid
           Expanded(
             child: StreamBuilder<List<TeachingMaterial>>(
-              stream: _selectedCategory != null
-                  ? _materialService.getMaterialsByCategory(_selectedCategory!)
-                  : _materialService.getAllMaterials(),
+              stream: _materialService.getMaterialsForUser(_institutionIds),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -76,7 +119,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
 
-                final materials = snapshot.data ?? [];
+                final all = snapshot.data ?? [];
+                final materials = _selectedCategory == null
+                    ? all
+                    : all.where((m) => m.category == _selectedCategory).toList();
 
                 if (materials.isEmpty) {
                   return Center(
@@ -91,17 +137,15 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                           style: TextStyle(
                               fontSize: 18, color: Colors.grey.shade600),
                         ),
-                        if (user?.userType == UserType.teacher) ...[
+                        if (canUpload) ...[
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const UploadMaterialScreen(),
-                                ),
-                              );
-                            },
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const UploadMaterialScreen(),
+                              ),
+                            ),
                             icon: const Icon(Icons.upload),
                             label: const Text('Upload First Material'),
                           ),
@@ -117,7 +161,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 0.65,
                   ),
                   itemCount: materials.length,
                   itemBuilder: (context, index) {
@@ -236,6 +280,24 @@ class MaterialCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
+                    if (material.institutionName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Chip(
+                          label: Text(
+                            material.institutionName!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 10),
+                          ),
+                          backgroundColor: Colors.teal.shade50,
+                          side: BorderSide(color: Colors.teal.shade200),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+                          padding: EdgeInsets.zero,
+                          labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                      ),
                     Row(
                       children: [
                         Icon(

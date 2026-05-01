@@ -11,6 +11,8 @@ import 'my_applications_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../jobs/my_job_postings_screen.dart';
 import '../materials/materials_screen.dart';
+import '../institution/manage_staff_screen.dart';
+import '../teacher/my_institutions_screen.dart';
 import '../login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -176,6 +178,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+            _buildMenuItem(
+              context,
+              icon: Icons.apartment,
+              title: 'My Institutions',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyInstitutionsScreen()),
+              ),
+            ),
           ],
 
           // Menu options - INSTITUTION
@@ -215,6 +226,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 );
               },
+            ),
+            _buildMenuItem(
+              context,
+              icon: Icons.group_work_outlined,
+              title: 'Manage Staff',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ManageStaffScreen()),
+              ),
             ),
           ],
 

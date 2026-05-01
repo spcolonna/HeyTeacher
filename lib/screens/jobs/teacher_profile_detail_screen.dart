@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/job_application.dart';
 import '../../models/teacher_profile.dart';
+import '../../models/institution_staff.dart';
 import '../../services/job_service.dart';
+import '../../services/staff_service.dart';
 import '../../services/firestore_wrapper.dart';
 import '../profile/document_preview_screen.dart';
 
@@ -19,12 +21,14 @@ class TeacherProfileDetailScreen extends StatefulWidget {
 class _TeacherProfileDetailScreenState
     extends State<TeacherProfileDetailScreen> {
   TeacherProfile? _profile;
+  List<InstitutionStaff> _clearing = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadTeacherProfile();
+    _loadClearing();
   }
 
   Future<void> _loadTeacherProfile() async {
@@ -41,6 +45,13 @@ class _TeacherProfileDetailScreenState
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _loadClearing() async {
+    try {
+      final list = await StaffService().getTeacherClearing(widget.application.teacherId);
+      if (mounted) setState(() => _clearing = list);
+    } catch (_) {}
   }
 
   void _showUpdateStatusDialog(BuildContext context, JobService jobService) {
@@ -174,6 +185,10 @@ class _TeacherProfileDetailScreenState
                     ],
                     const SizedBox(height: 16),
                     _buildDocumentsSection(),
+                    if (_clearing.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildClearingSection(),
+                    ],
                   ] else ...[
                     const SizedBox(height: 16),
                     _buildInfoCard(
@@ -485,6 +500,65 @@ class _TeacherProfileDetailScreenState
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClearingSection() {
+    final avg = _clearing.fold<double>(0, (sum, e) => sum + e.removalRating!) / _clearing.length;
+    final shown = _clearing.take(3).toList();
+
+    return _buildCvSection(
+      icon: Icons.verified_outlined,
+      title: 'Clearing',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 20),
+            const SizedBox(width: 4),
+            Text(
+              avg.toStringAsFixed(1),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              '${_clearing.length} evaluation${_clearing.length == 1 ? '' : 's'} from past employers',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+          ]),
+          const SizedBox(height: 12),
+          ...shown.map((entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(entry.institutionName,
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      if (entry.removalComment?.isNotEmpty == true)
+                        Text(entry.removalComment!,
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                    ]),
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(5, (i) => Icon(
+                      i < (entry.removalRating ?? 0) ? Icons.star_rounded : Icons.star_outline_rounded,
+                      size: 14,
+                      color: Colors.amber.shade600,
+                    )),
+                  ),
+                ]),
+              )),
+          const SizedBox(height: 4),
+          Row(children: [
+            Icon(Icons.verified, size: 13, color: Colors.teal.shade600),
+            const SizedBox(width: 4),
+            Text('Verified by HeyTeacher',
+                style: TextStyle(fontSize: 11, color: Colors.teal.shade700, fontWeight: FontWeight.w500)),
+          ]),
         ],
       ),
     );

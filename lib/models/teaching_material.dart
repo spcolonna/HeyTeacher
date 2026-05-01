@@ -16,7 +16,9 @@ class TeachingMaterial {
   final DateTime uploadedAt;
   final int downloadCount;
   final List<String> tags;
-  
+  final String? institutionId;   // null = public (teacher-uploaded)
+  final String? institutionName; // denormalized for display
+
   TeachingMaterial({
     required this.id,
     required this.title,
@@ -30,6 +32,8 @@ class TeachingMaterial {
     required this.uploadedAt,
     this.downloadCount = 0,
     this.tags = const [],
+    this.institutionId,
+    this.institutionName,
   });
   
   factory TeachingMaterial.fromFirestore(DocumentSnapshot doc) {
@@ -55,9 +59,11 @@ class TeachingMaterial {
       uploadedAt: (data['uploadedAt'] as Timestamp).toDate(),
       downloadCount: data['downloadCount'] ?? 0,
       tags: List<String>.from(data['tags'] ?? []),
+      institutionId: data['institutionId'],
+      institutionName: data['institutionName'],
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -71,6 +77,8 @@ class TeachingMaterial {
       'uploadedAt': Timestamp.fromDate(uploadedAt),
       'downloadCount': downloadCount,
       'tags': tags,
+      'institutionId': institutionId,
+      'institutionName': institutionName,
     };
   }
 }
