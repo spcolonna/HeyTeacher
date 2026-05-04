@@ -11,7 +11,6 @@ import '../../services/firestore_wrapper.dart';
 import '../../services/storage_service.dart';
 import 'manage_documents_screen.dart';
 
-// Predefined teaching methodologies
 const _kMethodologies = [
   'Communicative',
   'Task-Based',
@@ -19,6 +18,21 @@ const _kMethodologies = [
   'Content-Based',
   'TPR',
   'Blended Learning',
+];
+
+const _kSkillSuggestions = [
+  'Lesson Planning',
+  'Classroom Management',
+  'ESL Teaching',
+  'Grammar Instruction',
+  'Pronunciation Training',
+  'Business English',
+  'Cambridge Exam Prep',
+  'IELTS Preparation',
+  'TOEFL Preparation',
+  'Young Learners',
+  'Adult Education',
+  'Online Teaching',
 ];
 
 class EditTeacherProfileScreen extends StatefulWidget {
@@ -48,11 +62,14 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   final _locationCtrl = TextEditingController();
   final _yearsCtrl = TextEditingController();
   final _linkedinCtrl = TextEditingController();
+  final _skillCtrl = TextEditingController();
 
   List<CertificationType> _selectedCertifications = [];
   List<AvailabilityShift> _selectedShifts = [];
   List<TeachingLevel> _selectedLevels = [];
   List<String> _selectedMethodologies = [];
+  List<String> _skills = [];
+  List<WorkExperience> _workExperiences = [];
   bool _nativeSpeaker = false;
 
   @override
@@ -69,6 +86,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
     _locationCtrl.dispose();
     _yearsCtrl.dispose();
     _linkedinCtrl.dispose();
+    _skillCtrl.dispose();
     super.dispose();
   }
 
@@ -90,6 +108,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         _selectedShifts = List.from(_profile!.availability);
         _selectedLevels = List.from(_profile!.preferredLevels);
         _selectedMethodologies = List.from(_profile!.teachingMethodologies);
+        _skills = List.from(_profile!.skills);
+        _workExperiences = List.from(_profile!.workExperiences);
         _nativeSpeaker = _profile!.nativeSpeaker;
         _photoUrl = _profile!.photoUrl;
       } else {
@@ -104,14 +124,16 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
 
   double get _completeness {
     int score = 0;
-    if (_photoUrl != null || _selectedImage != null) score += 20;
-    if (_bioCtrl.text.trim().isNotEmpty) score += 15;
+    if (_photoUrl != null || _selectedImage != null) score += 15;
+    if (_bioCtrl.text.trim().isNotEmpty) score += 10;
     if (_locationCtrl.text.trim().isNotEmpty) score += 10;
-    if ((int.tryParse(_yearsCtrl.text) ?? 0) > 0) score += 10;
-    if (_selectedCertifications.isNotEmpty) score += 15;
+    if ((int.tryParse(_yearsCtrl.text) ?? 0) > 0) score += 5;
+    if (_selectedCertifications.isNotEmpty) score += 10;
     if (_selectedShifts.isNotEmpty) score += 10;
     if (_selectedLevels.isNotEmpty) score += 10;
-    if (_linkedinCtrl.text.trim().isNotEmpty) score += 10;
+    if (_linkedinCtrl.text.trim().isNotEmpty) score += 5;
+    if (_skills.isNotEmpty) score += 10;
+    if (_workExperiences.isNotEmpty) score += 15;
     return score / 100;
   }
 
@@ -216,6 +238,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         teachingMethodologies: _selectedMethodologies,
         availability: _selectedShifts,
         preferredLevels: _selectedLevels,
+        skills: _skills,
+        workExperiences: _workExperiences,
         cvUrl: _profile?.cvUrl,
         photoUrl: uploadedPhotoUrl,
         updatedAt: DateTime.now(),
@@ -238,6 +262,204 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  void _addSkill(String s) {
+    final trimmed = s.trim();
+    if (trimmed.isNotEmpty && !_skills.contains(trimmed)) {
+      setState(() { _skills.add(trimmed); });
+    }
+    _skillCtrl.clear();
+  }
+
+  Future<void> _showWorkExperienceDialog({WorkExperience? existing, int? index}) async {
+    final instCtrl = TextEditingController(text: existing?.institutionName ?? '');
+    final roleCtrl = TextEditingController(text: existing?.role ?? '');
+    final descCtrl = TextEditingController(text: existing?.description ?? '');
+    final startYearCtrl = TextEditingController(
+        text: existing != null ? existing.startYear.toString() : '');
+    final endYearCtrl = TextEditingController(
+        text: existing?.endYear?.toString() ?? '');
+
+    int startMonth = existing?.startMonth ?? 1;
+    int endMonth = existing?.endMonth ?? 1;
+    bool isCurrent = existing?.isCurrent ?? false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(existing == null ? 'Add Experience' : 'Edit Experience'),
+          contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: instCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Institution / Company *',
+                      border: OutlineInputBorder(),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: roleCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Role / Position *',
+                      border: OutlineInputBorder(),
+                      hintText: 'e.g. English Teacher',
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Start date',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        value: startMonth,
+                        decoration: const InputDecoration(
+                          labelText: 'Month',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        ),
+                        items: List.generate(12, (i) => DropdownMenuItem(
+                          value: i + 1,
+                          child: Text(WorkExperience.monthNames[i]),
+                        )),
+                        onChanged: (v) => setS(() => startMonth = v!),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: startYearCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Year',
+                          border: OutlineInputBorder(),
+                          hintText: '2022',
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('I currently work here'),
+                    value: isCurrent,
+                    onChanged: (v) => setS(() => isCurrent = v),
+                  ),
+                  if (!isCurrent) ...[
+                    Text('End date',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: endMonth,
+                          decoration: const InputDecoration(
+                            labelText: 'Month',
+                            border: OutlineInputBorder(),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                          ),
+                          items: List.generate(12, (i) => DropdownMenuItem(
+                            value: i + 1,
+                            child: Text(WorkExperience.monthNames[i]),
+                          )),
+                          onChanged: (v) => setS(() => endMonth = v!),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: endYearCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Year',
+                            border: OutlineInputBorder(),
+                            hintText: '2024',
+                          ),
+                          keyboardType: TextInputType.number,
+                          maxLength: 4,
+                          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+                        ),
+                      ),
+                    ]),
+                    const SizedBox(height: 12),
+                  ],
+                  TextField(
+                    controller: descCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Description (optional)',
+                      border: OutlineInputBorder(),
+                      hintText: 'What did you do? What levels did you teach?',
+                      alignLabelWithHint: true,
+                    ),
+                    maxLines: 3,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final inst = instCtrl.text.trim();
+                final role = roleCtrl.text.trim();
+                final startY = int.tryParse(startYearCtrl.text.trim());
+                if (inst.isEmpty || role.isEmpty || startY == null) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Please fill in institution, role, and start year')),
+                  );
+                  return;
+                }
+                final endY = isCurrent ? null : int.tryParse(endYearCtrl.text.trim());
+                final entry = WorkExperience(
+                  institutionName: inst,
+                  role: role,
+                  startYear: startY,
+                  startMonth: startMonth,
+                  endYear: endY,
+                  endMonth: isCurrent ? null : endMonth,
+                  isCurrent: isCurrent,
+                  description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+                );
+                setState(() {
+                  if (index != null) {
+                    _workExperiences[index] = entry;
+                  } else {
+                    _workExperiences.insert(0, entry);
+                  }
+                  // Sort: current jobs first, then by start date descending
+                  _workExperiences.sort((a, b) {
+                    if (a.isCurrent != b.isCurrent) return a.isCurrent ? -1 : 1;
+                    final aKey = a.startYear * 12 + a.startMonth;
+                    final bKey = b.startYear * 12 + b.startMonth;
+                    return bKey.compareTo(aKey);
+                  });
+                });
+                Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -285,6 +507,18 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                 icon: Icons.notes,
                 title: 'About Me',
                 child: _buildBioField(),
+              ),
+              const SizedBox(height: 16),
+              _buildSection(
+                icon: Icons.work_history_outlined,
+                title: 'Work Experience',
+                child: _buildWorkExperienceSection(),
+              ),
+              const SizedBox(height: 16),
+              _buildSection(
+                icon: Icons.star_outline,
+                title: 'Skills',
+                child: _buildSkillsSection(),
               ),
               const SizedBox(height: 16),
               _buildSection(
@@ -547,6 +781,145 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         ),
         const SizedBox(height: 4),
         Text('$len / 500', style: TextStyle(fontSize: 11, color: len > 450 ? Colors.orange : Colors.grey.shade500)),
+      ],
+    );
+  }
+
+  Widget _buildWorkExperienceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_workExperiences.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Add your teaching and work history',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            ),
+          ),
+        ..._workExperiences.asMap().entries.map((entry) {
+          final i = entry.key;
+          final exp = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+                title: Text(exp.role, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(exp.institutionName, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                    Text(exp.dateRange, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                  ],
+                ),
+                isThreeLine: true,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      onPressed: () => _showWorkExperienceDialog(existing: exp, index: i),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete_outline, size: 18, color: Colors.red.shade400),
+                      onPressed: () => setState(() => _workExperiences.removeAt(i)),
+                    ),
+                  ],
+                ),
+                onTap: () => _showWorkExperienceDialog(existing: exp, index: i),
+              ),
+            ),
+          );
+        }),
+        OutlinedButton.icon(
+          onPressed: () => _showWorkExperienceDialog(),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Experience'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkillsSection() {
+    final suggestions = _kSkillSuggestions.where((s) => !_skills.contains(s)).take(6).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_skills.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _skills.map((s) => Chip(
+              label: Text(s, style: const TextStyle(fontSize: 12)),
+              deleteIcon: const Icon(Icons.close, size: 14),
+              onDeleted: () => setState(() => _skills.remove(s)),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+              side: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+            )).toList(),
+          ),
+          const SizedBox(height: 12),
+        ],
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _skillCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'Add a skill...',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                textCapitalization: TextCapitalization.words,
+                onSubmitted: _addSkill,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => _addSkill(_skillCtrl.text),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+        if (suggestions.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text('Suggestions:', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: suggestions.map((s) => GestureDetector(
+              onTap: () => setState(() { if (!_skills.contains(s)) _skills.add(s); }),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 12, color: Colors.grey.shade600),
+                    const SizedBox(width: 3),
+                    Text(s, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                  ],
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
       ],
     );
   }

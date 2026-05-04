@@ -51,7 +51,9 @@ class _TeacherProfileDetailScreenState
     try {
       final list = await StaffService().getTeacherClearing(widget.application.teacherId);
       if (mounted) setState(() => _clearing = list);
-    } catch (_) {}
+    } catch (e) {
+      print('🔥 Clearing error: $e');
+    }
   }
 
   void _showUpdateStatusDialog(BuildContext context, JobService jobService) {
@@ -132,8 +134,8 @@ class _TeacherProfileDetailScreenState
         actions: [
           TextButton.icon(
             onPressed: () => _showUpdateStatusDialog(context, jobService),
-            icon: const Icon(Icons.edit, color: Colors.white, size: 18),
-            label: const Text('Update', style: TextStyle(color: Colors.white)),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('Update'),
           ),
         ],
       ),
@@ -152,6 +154,34 @@ class _TeacherProfileDetailScreenState
                     const SizedBox(height: 20),
                     if (_profile!.bio != null) ...[
                       _buildCvSection(icon: Icons.notes, title: 'Professional Summary', child: Text(_profile!.bio!)),
+                      const SizedBox(height: 16),
+                    ],
+                    if (_profile!.workExperiences.isNotEmpty) ...[
+                      _buildCvSection(
+                        icon: Icons.work_history_outlined,
+                        title: 'Work Experience',
+                        child: _buildWorkExperienceTimeline(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (_profile!.skills.isNotEmpty) ...[
+                      _buildCvSection(
+                        icon: Icons.star_outline,
+                        title: 'Skills',
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _profile!.skills.map((s) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3)),
+                            ),
+                            child: Text(s, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w500)),
+                          )).toList(),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                     ],
                     _buildCvSection(
@@ -185,10 +215,8 @@ class _TeacherProfileDetailScreenState
                     ],
                     const SizedBox(height: 16),
                     _buildDocumentsSection(),
-                    if (_clearing.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      _buildClearingSection(),
-                    ],
+                    const SizedBox(height: 16),
+                    _buildClearingSection(),
                   ] else ...[
                     const SizedBox(height: 16),
                     _buildInfoCard(
@@ -444,6 +472,104 @@ class _TeacherProfileDetailScreenState
     );
   }
 
+  Widget _buildWorkExperienceTimeline() {
+    final experiences = _profile!.workExperiences;
+    return Column(
+      children: experiences.asMap().entries.map((entry) {
+        final i = entry.key;
+        final exp = entry.value;
+        final isLast = i == experiences.length - 1;
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: exp.isCurrent
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade400,
+                      ),
+                    ),
+                    if (!isLast)
+                      Expanded(
+                        child: Container(
+                          width: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 2),
+                          color: Colors.grey.shade200,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(exp.role,
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 2),
+                                Text(exp.institutionName,
+                                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                              ],
+                            ),
+                          ),
+                          if (exp.isCurrent)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text('Current',
+                                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(children: [
+                        Icon(Icons.calendar_today_outlined, size: 11, color: Colors.grey.shade500),
+                        const SizedBox(width: 4),
+                        Text(exp.dateRange,
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        if (exp.duration.isNotEmpty) ...[
+                          Text(' · ', style: TextStyle(color: Colors.grey.shade400)),
+                          Text(exp.duration, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                        ],
+                      ]),
+                      if (exp.description?.isNotEmpty == true) ...[
+                        const SizedBox(height: 5),
+                        Text(exp.description!,
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4)),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildDocumentsSection() {
     final cvUrl = widget.application.cvUrl ?? _profile?.cvUrl;
     final certFiles = _profile?.certificationFiles ?? [];
@@ -506,62 +632,170 @@ class _TeacherProfileDetailScreenState
   }
 
   Widget _buildClearingSection() {
-    final avg = _clearing.fold<double>(0, (sum, e) => sum + e.removalRating!) / _clearing.length;
-    final shown = _clearing.take(3).toList();
-
     return _buildCvSection(
       icon: Icons.verified_outlined,
       title: 'Clearing',
+      child: _clearing.isEmpty
+          ? Row(children: [
+              Icon(Icons.info_outline, size: 16, color: Colors.grey.shade400),
+              const SizedBox(width: 8),
+              Text(
+                'No employment history yet',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              ),
+            ])
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Overall summary
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(children: [
+                    Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 28),
+                    const SizedBox(width: 8),
+                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(
+                        (_clearing.fold<double>(0, (s, e) => s + e.removalRating!) / _clearing.length)
+                            .toStringAsFixed(1),
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        '${_clearing.length} evaluation${_clearing.length == 1 ? '' : 's'} from past employers',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ]),
+                    const Spacer(),
+                    Row(
+                      children: List.generate(5, (i) {
+                        final avg = _clearing.fold<double>(0, (s, e) => s + e.removalRating!) / _clearing.length;
+                        return Icon(
+                          i < avg.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                          size: 16,
+                          color: Colors.amber.shade600,
+                        );
+                      }),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 12),
+                // Individual entries
+                ..._clearing.map((entry) => _buildClearingEntry(entry)),
+                const SizedBox(height: 4),
+                Row(children: [
+                  Icon(Icons.verified, size: 13, color: Colors.teal.shade600),
+                  const SizedBox(width: 4),
+                  Text('Verified by HeyTeacher',
+                      style: TextStyle(fontSize: 11, color: Colors.teal.shade700, fontWeight: FontWeight.w500)),
+                ]),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildClearingEntry(InstitutionStaff entry) {
+    final rating = entry.removalRating ?? 0;
+    final color = rating >= 4 ? Colors.green : rating >= 3 ? Colors.orange : Colors.red;
+    final date = entry.removedAt;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(Icons.star_rounded, color: Colors.amber.shade600, size: 20),
-            const SizedBox(width: 4),
-            Text(
-              avg.toStringAsFixed(1),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              '${_clearing.length} evaluation${_clearing.length == 1 ? '' : 's'} from past employers',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-            ),
-          ]),
-          const SizedBox(height: 12),
-          ...shown.map((entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(entry.institutionName,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                      if (entry.removalComment?.isNotEmpty == true)
-                        Text(entry.removalComment!,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                    ]),
-                  ),
-                  const SizedBox(width: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (i) => Icon(
-                      i < (entry.removalRating ?? 0) ? Icons.star_rounded : Icons.star_outline_rounded,
-                      size: 14,
-                      color: Colors.amber.shade600,
-                    )),
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(entry.institutionName,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                  if (date != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _formatClearingDate(date),
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    ),
+                  ],
                 ]),
-              )),
-          const SizedBox(height: 4),
-          Row(children: [
-            Icon(Icons.verified, size: 13, color: Colors.teal.shade600),
-            const SizedBox(width: 4),
-            Text('Verified by HeyTeacher',
-                style: TextStyle(fontSize: 11, color: Colors.teal.shade700, fontWeight: FontWeight.w500)),
-          ]),
+              ),
+              const SizedBox(width: 8),
+              // Star rating with colored background
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: color.withValues(alpha: 0.3)),
+                ),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.star_rounded, size: 13, color: color),
+                  const SizedBox(width: 3),
+                  Text('$rating / 5',
+                      style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w700)),
+                ]),
+              ),
+            ],
+          ),
+          // Stars row
+          const SizedBox(height: 6),
+          Row(children: List.generate(5, (i) => Icon(
+            i < rating ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: 14,
+            color: Colors.amber.shade600,
+          ))),
+          // Removal reason badge
+          if (entry.removalReason?.isNotEmpty == true) ...[
+            const SizedBox(height: 6),
+            Row(children: [
+              Icon(Icons.label_outline, size: 12, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Text(entry.removalReason!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+            ]),
+          ],
+          // Comment
+          if (entry.removalComment?.isNotEmpty == true) ...[
+            const SizedBox(height: 5),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.format_quote, size: 14, color: Colors.grey.shade400),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(entry.removalComment!,
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontStyle: FontStyle.italic, height: 1.4)),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _formatClearingDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildCvSection({required IconData icon, required String title, required Widget child}) {

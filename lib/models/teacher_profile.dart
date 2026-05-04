@@ -6,6 +6,81 @@ enum AvailabilityShift { morning, afternoon, evening }
 
 enum TeachingLevel { kinder, primary, secondary, adult }
 
+class WorkExperience {
+  final String institutionName;
+  final String role;
+  final int startYear;
+  final int startMonth;
+  final int? endYear;
+  final int? endMonth;
+  final bool isCurrent;
+  final String? description;
+
+  WorkExperience({
+    required this.institutionName,
+    required this.role,
+    required this.startYear,
+    required this.startMonth,
+    this.endYear,
+    this.endMonth,
+    this.isCurrent = false,
+    this.description,
+  });
+
+  static const monthNames = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  String _fmt(int year, int month) => '${monthNames[month - 1]} $year';
+
+  String get dateRange {
+    final start = _fmt(startYear, startMonth);
+    final end = isCurrent
+        ? 'Present'
+        : (endYear != null && endMonth != null ? _fmt(endYear!, endMonth!) : '');
+    return '$start – $end';
+  }
+
+  // Duration in months for display
+  String get duration {
+    final now = DateTime.now();
+    final endY = isCurrent ? now.year : (endYear ?? now.year);
+    final endM = isCurrent ? now.month : (endMonth ?? now.month);
+    final months = (endY - startYear) * 12 + (endM - startMonth);
+    if (months < 1) return '';
+    final y = months ~/ 12;
+    final m = months % 12;
+    if (y == 0) return '${m}mo';
+    if (m == 0) return '${y}yr';
+    return '${y}yr ${m}mo';
+  }
+
+  factory WorkExperience.fromMap(Map<String, dynamic> data) {
+    return WorkExperience(
+      institutionName: data['institutionName'] ?? '',
+      role: data['role'] ?? '',
+      startYear: data['startYear'] ?? DateTime.now().year,
+      startMonth: data['startMonth'] ?? 1,
+      endYear: data['endYear'],
+      endMonth: data['endMonth'],
+      isCurrent: data['isCurrent'] ?? false,
+      description: data['description'],
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'institutionName': institutionName,
+        'role': role,
+        'startYear': startYear,
+        'startMonth': startMonth,
+        if (endYear != null) 'endYear': endYear,
+        if (endMonth != null) 'endMonth': endMonth,
+        'isCurrent': isCurrent,
+        if (description?.isNotEmpty == true) 'description': description,
+      };
+}
+
 class TeacherProfile {
   final String uid;
   final String fullName;
@@ -19,6 +94,8 @@ class TeacherProfile {
   final List<String> teachingMethodologies;
   final List<AvailabilityShift> availability;
   final List<TeachingLevel> preferredLevels;
+  final List<String> skills;
+  final List<WorkExperience> workExperiences;
   final String? cvUrl;
   final int yearsOfExperience;
   final String? location;
@@ -38,6 +115,8 @@ class TeacherProfile {
     this.teachingMethodologies = const [],
     this.availability = const [],
     this.preferredLevels = const [],
+    this.skills = const [],
+    this.workExperiences = const [],
     this.cvUrl,
     this.yearsOfExperience = 0,
     this.location,
@@ -49,7 +128,6 @@ class TeacherProfile {
     final data = doc.data() as Map<String, dynamic>;
     final files = List<String>.from(data['certificationFiles'] ?? []);
     final names = List<String>.from(data['certificationNames'] ?? []);
-    // Ensure names array is same length as files (pad with empty strings)
     while (names.length < files.length) { names.add(''); }
 
     return TeacherProfile(
@@ -84,6 +162,11 @@ class TeacherProfile {
                   ))
               .toList() ??
           [],
+      skills: List<String>.from(data['skills'] ?? []),
+      workExperiences: (data['workExperiences'] as List<dynamic>?)
+              ?.map((e) => WorkExperience.fromMap(e as Map<String, dynamic>))
+              .toList() ??
+          [],
       cvUrl: data['cvUrl'],
       yearsOfExperience: data['yearsOfExperience'] ?? 0,
       location: data['location'],
@@ -107,6 +190,8 @@ class TeacherProfile {
             availability.map((e) => e.toString().split('.').last).toList(),
         'preferredLevels':
             preferredLevels.map((e) => e.toString().split('.').last).toList(),
+        'skills': skills,
+        'workExperiences': workExperiences.map((e) => e.toMap()).toList(),
         'cvUrl': cvUrl,
         'yearsOfExperience': yearsOfExperience,
         'location': location,

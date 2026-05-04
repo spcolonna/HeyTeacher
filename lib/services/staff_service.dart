@@ -144,11 +144,12 @@ class StaffService {
         .collection('institution_staff')
         .where('teacherId', isEqualTo: teacherId)
         .where('status', isEqualTo: 'removed')
-        .orderBy('removedAt', descending: true)
         .get();
-    return snap.docs
+    final list = snap.docs
         .map((d) => InstitutionStaff.fromFirestore(d))
         .where((s) => s.removalRating != null)
         .toList();
+    list.sort((a, b) => (b.removedAt ?? DateTime(0)).compareTo(a.removedAt ?? DateTime(0)));
+    return list;
   }
 }

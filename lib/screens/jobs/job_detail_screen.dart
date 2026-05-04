@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/app_user.dart';
 import '../../models/job_posting.dart';
@@ -33,6 +34,14 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
     setState(() => _isApplying = true);
 
     try {
+      final profileDoc = await FirebaseFirestore.instance
+          .collection('teacher_profiles')
+          .doc(user.uid)
+          .get();
+      final photoUrl = profileDoc.exists
+          ? (profileDoc.data() as Map<String, dynamic>)['photoUrl'] as String?
+          : null;
+
       await _jobService.applyToJob(
         jobId: widget.job.id,
         jobTitle: widget.job.jobTitle,
@@ -41,6 +50,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
         teacherId: user.uid,
         teacherName: user.displayName,
         teacherEmail: user.email,
+        teacherPhotoUrl: photoUrl,
       );
 
       if (!mounted) return;
