@@ -303,6 +303,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 28),
+                  // Developer branding
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/images/spc_logo_compressed.jpg',
+                          height: 44,
+                          width: 44,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            height: 44, width: 44,
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade300),
+                            child: Center(child: Text('SPC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600))),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Made by SPC',
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

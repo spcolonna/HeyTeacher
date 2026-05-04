@@ -1,7 +1,7 @@
 name: hey_teacher_app
 description: Platform for English teachers in Uruguay
 publish_to: 'none'
-version: 1.0.0+8
+version: 1.0.1+0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

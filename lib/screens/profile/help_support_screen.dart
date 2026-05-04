@@ -129,6 +129,48 @@ class HelpSupportScreen extends StatelessWidget {
               ),
             ),
           ),
+          const Divider(height: 1),
+          const SizedBox(height: 28),
+          // Developer attribution
+          Padding(
+            padding: const EdgeInsets.only(bottom: 36),
+            child: Column(
+              children: [
+                Text(
+                  'HeyTeacher is developed by',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/spc_logo_compressed.jpg',
+                        height: 48,
+                        width: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 48, width: 48,
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade200),
+                          child: Center(child: Text('SPC', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600))),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('SPC', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
+                        Text('v1.0.2', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

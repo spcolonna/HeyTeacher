@@ -313,6 +313,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           const SizedBox(height: 32),
+          // Developer branding footer
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: Image.asset(
+                  'assets/images/spc_logo_compressed.jpg',
+                  height: 44,
+                  width: 44,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 44, width: 44,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade200),
+                    child: Center(child: Text('SPC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500))),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Made by SPC', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                  Text('v1.0.2', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );

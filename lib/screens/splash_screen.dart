@@ -152,6 +152,31 @@ class _SplashScreenState extends State<SplashScreen>
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   strokeWidth: 3,
                 ),
+                const SizedBox(height: 36),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ClipOval(
+                      child: Image.asset(
+                        'assets/images/spc_logo_compressed.jpg',
+                        height: 40,
+                        width: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 40, width: 40,
+                          decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white24),
+                          child: const Center(child: Text('SPC', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white))),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Made by SPC',
+                      style: TextStyle(fontSize: 13, color: Colors.white70, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
