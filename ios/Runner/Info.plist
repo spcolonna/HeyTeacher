@@ -22,10 +22,27 @@
 	<string>$(FLUTTER_BUILD_NAME)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.854565098615-5bt30kjj3b0eohnl13hgrht8fkjunckh</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>HeyTeacher necesita acceso a la cámara para tomar fotos de perfil y documentos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HeyTeacher necesita guardar imágenes descargadas en tu galería.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>HeyTeacher necesita acceso a tu galería para subir tu foto de perfil, CV y certificaciones.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -49,6 +66,10 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -66,22 +87,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.854565098615-5bt30kjj3b0eohnl13hgrht8fkjunckh</string>
-			</array>
-		</dict>
-	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>HeyTeacher necesita acceso a tu galería para subir tu foto de perfil, CV y certificaciones.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>HeyTeacher necesita acceso a la cámara para tomar fotos de perfil y documentos.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>HeyTeacher necesita guardar imágenes descargadas en tu galería.</string>
 </dict>
 </plist>
