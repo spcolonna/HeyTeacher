@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
+import '../login_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,10 +13,32 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // TODO(spcolonna): if your support repo has a different name, update these URLs.
+  static const _privacyPolicyUrl =
+      'https://spcolonna.github.io/heyteacher-support/privacy.html';
+  static const _termsUrl =
+      'https://spcolonna.github.io/heyteacher-support/terms.html';
+  static const _supportEmail = 'spcolonna@gmail.com';
+
   bool _emailNotifications = true;
   bool _pushNotifications = true;
   bool _jobAlerts = true;
   bool _materialUpdates = false;
+
+  bool get _isPasswordUser =>
+      FirebaseAuth.instance.currentUser?.providerData
+          .any((p) => p.providerId == 'password') ??
+      false;
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not open $url')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,20 +56,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: const Text('Account Information'),
             subtitle: Text(user?.email ?? ''),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Account info coming soon')),
-              );
-            },
+            onTap: () => _showAccountInfo(context),
           ),
-          ListTile(
-            leading: const Icon(Icons.lock),
-            title: const Text('Change Password'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _showChangePasswordDialog(context);
-            },
-          ),
+          if (_isPasswordUser)
+            ListTile(
+              leading: const Icon(Icons.lock),
+              title: const Text('Change Password'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showChangePasswordDialog(context),
+            ),
           const Divider(),
           const _SectionHeader('Notifications'),
           SwitchListTile(
@@ -88,48 +108,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.privacy_tip),
             title: const Text('Privacy Policy'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy Policy coming soon')),
-              );
-            },
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _openUrl(_privacyPolicyUrl),
           ),
           ListTile(
             leading: const Icon(Icons.description),
             title: const Text('Terms of Service'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Terms of Service coming soon')),
-              );
-            },
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _openUrl(_termsUrl),
           ),
           const Divider(),
           const _SectionHeader('App'),
           ListTile(
             leading: const Icon(Icons.info),
             title: const Text('About'),
-            subtitle: const Text('Version 1.0.0'),
+            subtitle: const Text('Version 1.0.1'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               showAboutDialog(
                 context: context,
                 applicationName: 'HeyTeacher!',
-                applicationVersion: '1.0.0',
-                applicationLegalese: '© 2025 HeyTeacher',
+                applicationVersion: '1.0.1',
+                applicationLegalese: '© 2026 HeyTeacher',
               );
             },
           ),
           ListTile(
             leading: const Icon(Icons.bug_report),
             title: const Text('Report a Bug'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Bug report form coming soon')),
-              );
-            },
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _openUrl(
+              'mailto:$_supportEmail?subject=HeyTeacher%20Bug%20Report',
+            ),
+          ),
+          const Divider(),
+          const _SectionHeader('Danger Zone'),
+          ListTile(
+            leading: const Icon(Icons.delete_forever, color: Colors.red),
+            title: const Text(
+              'Delete Account',
+              style: TextStyle(color: Colors.red),
+            ),
+            subtitle: const Text('Permanently delete your account and data'),
+            onTap: () => _confirmDeleteAccount(context),
           ),
           const SizedBox(height: 20),
         ],
@@ -137,63 +158,162 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
+  void _showAccountInfo(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
+        title: const Text('Account Information'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: currentPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Current Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: newPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'New Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Confirm New Password',
-                border: OutlineInputBorder(),
-              ),
+            _InfoRow('Name', user?.displayName ?? '-'),
+            _InfoRow('Email', user?.email ?? '-'),
+            _InfoRow(
+              'Account type',
+              user?.userType.name == 'institution' ? 'Institution' : 'Teacher',
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final email = auth.currentUser?.email;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change Password'),
+        content: Text(
+          email == null
+              ? 'No email is associated with this account.'
+              : "We'll send a password reset link to $email.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password change coming soon'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            },
-            child: const Text('Change'),
+            onPressed: email == null
+                ? null
+                : () async {
+                    Navigator.pop(dialogContext);
+                    final ok = await auth.resetPassword(email);
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(ok
+                            ? 'Password reset email sent'
+                            : auth.errorMessage ?? 'Could not send email'),
+                        backgroundColor: ok ? Colors.green : Colors.red,
+                      ),
+                    );
+                  },
+            child: const Text('Send Email'),
           ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final passwordController = TextEditingController();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This will permanently delete your account and all associated '
+              'data. This action cannot be undone.',
+            ),
+            if (_isPasswordUser) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm your password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final ok = await auth.deleteAccount(
+      password: _isPasswordUser ? passwordController.text : null,
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (_) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Could not delete account'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontSize: 15)),
         ],
       ),
     );

@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../providers/auth_provider.dart';
 import 'signup_screen.dart';
 import 'home_screen.dart';
@@ -70,6 +73,30 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
+
+  Future<void> _handleAppleSignIn() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final result = await authProvider.signInWithApple();
+
+    if (!mounted) return;
+
+    if (result.isExisting) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else if (result.isNewUser) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              GoogleUserTypeScreen(firebaseUser: result.firebaseUser!),
+        ),
+      );
+    }
+  }
+
+  // Sign in with Apple is only available on Apple platforms.
+  bool get _showAppleSignIn =>
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
 
   Future<void> _handleForgotPassword() async {
     if (_emailController.text.trim().isEmpty) {
@@ -255,6 +282,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+
+                  // Sign in with Apple (required on iOS by App Store guideline 4.8)
+                  if (_showAppleSignIn) ...[
+                    SignInWithAppleButton(
+                      onPressed: _handleAppleSignIn,
+                      height: 50,
+                      style: SignInWithAppleButtonStyle.black,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Google Sign-In
                   Consumer<AuthProvider>(

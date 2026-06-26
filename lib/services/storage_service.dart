@@ -111,6 +111,28 @@ class StorageService {
     );
   }
 
+  // Delete all files stored for a user (best-effort, used on account deletion)
+  Future<void> deleteUserFiles(String userId) async {
+    const folders = [
+      'cvs',
+      'certifications',
+      'materials',
+      'profile_photos',
+      'institution_logos',
+    ];
+    for (final folder in folders) {
+      try {
+        final result = await _storage.ref().child('$folder/$userId').listAll();
+        for (final item in result.items) {
+          await item.delete();
+        }
+      } catch (e) {
+        // Folder may not exist for this user — ignore.
+        print('Skipping $folder for $userId: $e');
+      }
+    }
+  }
+
   // Delete file by URL
   Future<void> deleteFileByUrl(String url) async {
     try {

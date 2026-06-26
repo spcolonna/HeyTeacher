@@ -1,11 +1,17 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/app_user.dart';
 import 'firestore_wrapper.dart';
 import 'google_calendar_service.dart';
+import 'storage_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final StorageService _storage = StorageService();
 
   // Get current user stream
   Stream<User?> get userStream => _auth.authStateChanges();
@@ -113,33 +119,90 @@ class AuthService {
   }
 
   // Sign in with Google (also grants Calendar scope via GoogleCalendarService)
-  Future<GoogleSignInResult> signInWithGoogle() async {
+  Future<SocialSignInResult> signInWithGoogle() async {
     try {
       final credential = await GoogleCalendarService.getFirebaseCredential();
-      if (credential == null) return GoogleSignInResult.cancelled();
+      if (credential == null) return SocialSignInResult.cancelled();
 
       final result = await _auth.signInWithCredential(credential);
       final user = result.user;
-      if (user == null) return GoogleSignInResult.cancelled();
+      if (user == null) return SocialSignInResult.cancelled();
 
       final isNew = result.additionalUserInfo?.isNewUser ?? false;
 
       if (!isNew) {
         final doc = await FirestoreWrapper.getDocument('users', user.uid);
         if (doc.exists) {
-          return GoogleSignInResult.existing(AppUser.fromFirestore(doc));
+          return SocialSignInResult.existing(AppUser.fromFirestore(doc));
         }
       }
 
-      // New user — caller must pick UserType then call createGoogleUser()
-      return GoogleSignInResult.newUser(user);
+      // New user — caller must pick UserType then call createSocialUser()
+      return SocialSignInResult.newUser(user);
     } catch (e) {
       rethrow;
     }
   }
 
-  // Finalize new Google user after they pick teacher/institution
-  Future<AppUser> createGoogleUser({
+  // Sign in with Apple (required by App Store guideline 4.8)
+  Future<SocialSignInResult> signInWithApple() async {
+    try {
+      // Apple requires a nonce: we send the SHA-256 hash and verify with the raw value.
+      final rawNonce = _generateNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
+      );
+
+      final result = await _auth.signInWithCredential(oauthCredential);
+      final user = result.user;
+      if (user == null) return SocialSignInResult.cancelled();
+
+      final isNew = result.additionalUserInfo?.isNewUser ?? false;
+
+      if (!isNew) {
+        final doc = await FirestoreWrapper.getDocument('users', user.uid);
+        if (doc.exists) {
+          return SocialSignInResult.existing(AppUser.fromFirestore(doc));
+        }
+      }
+
+      // Apple only returns the name on the FIRST sign-in — persist it now.
+      final appleName = [appleCredential.givenName, appleCredential.familyName]
+          .where((p) => p != null && p.isNotEmpty)
+          .join(' ');
+      if (appleName.isNotEmpty &&
+          (user.displayName == null || user.displayName!.isEmpty)) {
+        await user.updateDisplayName(appleName);
+        await user.reload();
+      }
+
+      // New user — caller must pick UserType then call createSocialUser()
+      return SocialSignInResult.newUser(_auth.currentUser ?? user);
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // User cancelled the Apple sheet
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return SocialSignInResult.cancelled();
+      }
+      rethrow;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Finalize a new social (Google/Apple) user after they pick teacher/institution
+  Future<AppUser> createSocialUser({
     required User firebaseUser,
     required UserType userType,
   }) async {
@@ -156,6 +219,13 @@ class AuthService {
     return appUser;
   }
 
+  // Backwards-compatible alias (kept for existing callers)
+  Future<AppUser> createGoogleUser({
+    required User firebaseUser,
+    required UserType userType,
+  }) =>
+      createSocialUser(firebaseUser: firebaseUser, userType: userType);
+
   // Reset password
   Future<void> resetPassword(String email) async {
     try {
@@ -165,6 +235,97 @@ class AuthService {
       print('Stack trace: $stackTrace');
       rethrow;
     }
+  }
+
+  // Permanently delete the current account and its data (App Store guideline 5.1.1).
+  // [password] is only required to re-authenticate email/password users.
+  Future<void> deleteAccount({String? password}) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    final uid = user.uid;
+
+    // Best-effort cleanup of the user's Firestore documents and stored files.
+    await _deleteUserData(uid);
+
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        await _reauthenticate(user, password);
+        await user.delete();
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _deleteUserData(String uid) async {
+    // Stored files (CV, certifications, photos, etc.) — best-effort.
+    try {
+      await _storage.deleteUserFiles(uid);
+    } catch (_) {/* ignore */}
+
+    for (final collection in const [
+      'users',
+      'teacher_profiles',
+      'institution_profiles',
+    ]) {
+      try {
+        await FirestoreWrapper.deleteDocument(collection, uid);
+      } catch (_) {/* doc may not exist for this user type */}
+    }
+  }
+
+  Future<void> _reauthenticate(User user, String? password) async {
+    final providerId =
+        user.providerData.isNotEmpty ? user.providerData.first.providerId : '';
+
+    switch (providerId) {
+      case 'google.com':
+        final cred = await GoogleCalendarService.getFirebaseCredential();
+        if (cred == null) throw Exception('Re-authentication cancelled');
+        await user.reauthenticateWithCredential(cred);
+        break;
+      case 'apple.com':
+        final cred = await _appleReauthCredential();
+        await user.reauthenticateWithCredential(cred);
+        break;
+      default: // password
+        if (password == null || password.isEmpty) {
+          throw FirebaseAuthException(
+            code: 'requires-recent-login',
+            message: 'Please enter your password to confirm deletion.',
+          );
+        }
+        final cred = EmailAuthProvider.credential(
+          email: user.email ?? '',
+          password: password,
+        );
+        await user.reauthenticateWithCredential(cred);
+    }
+  }
+
+  Future<OAuthCredential> _appleReauthCredential() async {
+    final rawNonce = _generateNonce();
+    final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+    final appleCredential = await SignInWithApple.getAppleIDCredential(
+      scopes: [AppleIDAuthorizationScopes.email],
+      nonce: hashedNonce,
+    );
+    return OAuthProvider('apple.com').credential(
+      idToken: appleCredential.identityToken,
+      rawNonce: rawNonce,
+      accessToken: appleCredential.authorizationCode,
+    );
+  }
+
+  // Cryptographically secure random string for the Apple sign-in nonce.
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   // Update user profile
@@ -200,29 +361,33 @@ class AuthService {
   }
 }
 
-enum _GoogleSignInStatus { existing, newUser, cancelled }
+enum _SocialSignInStatus { existing, newUser, cancelled }
 
-class GoogleSignInResult {
-  final _GoogleSignInStatus _status;
+/// Result of a social sign-in (Google or Apple).
+class SocialSignInResult {
+  final _SocialSignInStatus _status;
   final AppUser? appUser;
   final User? firebaseUser;
 
-  const GoogleSignInResult._({
-    required _GoogleSignInStatus status,
+  const SocialSignInResult._({
+    required _SocialSignInStatus status,
     this.appUser,
     this.firebaseUser,
   }) : _status = status;
 
-  factory GoogleSignInResult.existing(AppUser user) =>
-      GoogleSignInResult._(status: _GoogleSignInStatus.existing, appUser: user);
+  factory SocialSignInResult.existing(AppUser user) =>
+      SocialSignInResult._(status: _SocialSignInStatus.existing, appUser: user);
 
-  factory GoogleSignInResult.newUser(User user) =>
-      GoogleSignInResult._(status: _GoogleSignInStatus.newUser, firebaseUser: user);
+  factory SocialSignInResult.newUser(User user) =>
+      SocialSignInResult._(status: _SocialSignInStatus.newUser, firebaseUser: user);
 
-  factory GoogleSignInResult.cancelled() =>
-      const GoogleSignInResult._(status: _GoogleSignInStatus.cancelled);
+  factory SocialSignInResult.cancelled() =>
+      const SocialSignInResult._(status: _SocialSignInStatus.cancelled);
 
-  bool get isExisting => _status == _GoogleSignInStatus.existing;
-  bool get isNewUser => _status == _GoogleSignInStatus.newUser;
-  bool get isCancelled => _status == _GoogleSignInStatus.cancelled;
+  bool get isExisting => _status == _SocialSignInStatus.existing;
+  bool get isNewUser => _status == _SocialSignInStatus.newUser;
+  bool get isCancelled => _status == _SocialSignInStatus.cancelled;
 }
+
+// Backwards-compatible alias for existing callers.
+typedef GoogleSignInResult = SocialSignInResult;

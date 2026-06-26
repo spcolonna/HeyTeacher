@@ -1,10 +1,12 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../providers/auth_provider.dart';
 import '../models/app_user.dart';
 import 'home_screen.dart';
-import 'google_user_type_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -133,6 +135,57 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     }
   }
+
+  Future<void> _handleAppleSignUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final result = await authProvider.signInWithApple();
+
+      if (!mounted) return;
+
+      if (result.isExisting) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      } else if (result.isNewUser) {
+        final ok = await authProvider.createSocialUser(
+          firebaseUser: result.firebaseUser!,
+          userType: _selectedUserType,
+        );
+
+        if (!mounted) return;
+        if (ok) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(authProvider.errorMessage ?? 'Error creating account'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Apple Sign-Up cancelled'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+  }
+
+  // Sign in with Apple is only available on Apple platforms.
+  bool get _showAppleSignIn =>
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
 
   @override
   Widget build(BuildContext context) {
@@ -468,6 +521,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // Sign up with Apple (required on iOS by App Store guideline 4.8)
+                if (_showAppleSignIn) ...[
+                  SignInWithAppleButton(
+                    onPressed: _handleAppleSignUp,
+                    text: 'Sign up with Apple',
+                    height: 50,
+                    style: SignInWithAppleButtonStyle.black,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Google Sign-Up
                 Consumer<AuthProvider>(

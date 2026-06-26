@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
-export '../services/auth_service.dart' show GoogleSignInResult;
+export '../services/auth_service.dart' show SocialSignInResult, GoogleSignInResult;
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -100,7 +100,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<GoogleSignInResult> signInWithGoogle() async {
+  Future<SocialSignInResult> signInWithGoogle() async {
     _setLoading(true);
     _errorMessage = null;
     try {
@@ -113,19 +113,38 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Google Sign-In failed. Please try again.';
       notifyListeners();
-      return GoogleSignInResult.cancelled();
+      return SocialSignInResult.cancelled();
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<bool> createGoogleUser({
+  Future<SocialSignInResult> signInWithApple() async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      final result = await _authService.signInWithApple();
+      if (result.isExisting) {
+        _currentUser = result.appUser;
+        notifyListeners();
+      }
+      return result;
+    } catch (e) {
+      _errorMessage = 'Apple Sign-In failed. Please try again.';
+      notifyListeners();
+      return SocialSignInResult.cancelled();
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> createSocialUser({
     required firebaseUser,
     required UserType userType,
   }) async {
     _setLoading(true);
     try {
-      _currentUser = await _authService.createGoogleUser(
+      _currentUser = await _authService.createSocialUser(
         firebaseUser: firebaseUser,
         userType: userType,
       );
@@ -133,6 +152,36 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = 'Failed to create account.';
+      notifyListeners();
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Backwards-compatible alias for existing callers.
+  Future<bool> createGoogleUser({
+    required firebaseUser,
+    required UserType userType,
+  }) =>
+      createSocialUser(firebaseUser: firebaseUser, userType: userType);
+
+  /// Permanently deletes the current account and its data.
+  /// [password] is required only for email/password users.
+  Future<bool> deleteAccount({String? password}) async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      await _authService.deleteAccount(password: password);
+      _currentUser = null;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _getAuthErrorMessage(e.code);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Could not delete the account. Please try again.';
       notifyListeners();
       return false;
     } finally {

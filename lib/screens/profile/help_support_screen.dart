@@ -4,10 +4,12 @@ import 'package:url_launcher/url_launcher.dart';
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
 
+  static const _supportEmail = 'spcolonna@gmail.com';
+
   Future<void> _sendEmail() async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: 'support@heyteacher.uy',
+      path: _supportEmail,
       query: 'subject=Help Request&body=',
     );
 
@@ -55,42 +57,9 @@ class HelpSupportScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.email, color: Colors.blue),
             title: const Text('Email Support'),
-            subtitle: const Text('support@heyteacher.uy'),
+            subtitle: const Text(_supportEmail),
             trailing: const Icon(Icons.chevron_right),
             onTap: _sendEmail,
-          ),
-          ListTile(
-            leading: const Icon(Icons.chat, color: Colors.green),
-            title: const Text('Live Chat'),
-            subtitle: const Text('Available Mon-Fri 9am-6pm'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Live chat coming soon')),
-              );
-            },
-          ),
-          const Divider(),
-          const _SectionHeader('Resources'),
-          ListTile(
-            leading: const Icon(Icons.book, color: Colors.orange),
-            title: const Text('User Guide'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('User guide coming soon')),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.video_library, color: Colors.red),
-            title: const Text('Video Tutorials'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Video tutorials coming soon')),
-              );
-            },
           ),
           const SizedBox(height: 20),
           Padding(
@@ -163,7 +132,7 @@ class HelpSupportScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('SPC', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
-                        Text('v1.0.2', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                        Text('v1.0.1', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
                       ],
                     ),
                   ],

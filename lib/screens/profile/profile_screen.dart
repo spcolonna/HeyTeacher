@@ -14,6 +14,8 @@ import '../materials/materials_screen.dart';
 import '../institution/manage_staff_screen.dart';
 import '../teacher/my_institutions_screen.dart';
 import '../login_screen.dart';
+import 'settings_screen.dart';
+import 'help_support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -77,11 +79,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings - Coming soon')),
-              );
-            },
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
           ),
         ],
       ),
@@ -253,11 +254,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             context,
             icon: Icons.help_outline,
             title: 'Help & Support',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Help & Support - Coming soon')),
-              );
-            },
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+            ),
           ),
 
           _buildMenuItem(
@@ -268,9 +268,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               showAboutDialog(
                 context: context,
                 applicationName: 'HeyTeacher',
-                applicationVersion: '1.0.2',
+                applicationVersion: '1.0.1',
                 applicationLegalese:
-                    '© 2025 HeyTeacher\nConnecting teachers with opportunities',
+                    '© 2026 HeyTeacher\nConnecting teachers with opportunities',
               );
             },
           ),
