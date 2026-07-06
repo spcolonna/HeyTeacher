@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/app_user.dart';
 import '../../models/job_posting.dart';
 import '../../services/job_service.dart';
+import '../login_screen.dart';
 
 class JobDetailScreen extends StatefulWidget {
   final JobPosting job;
@@ -181,30 +182,57 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: isTeacher && widget.job.status == JobStatus.active
-          ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: ElevatedButton(
-                  onPressed: _isApplying ? null : _applyToJob,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isApplying
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Apply Now', style: TextStyle(fontSize: 16)),
-                ),
+      bottomNavigationBar: _buildBottomBar(context, user, isTeacher),
+    );
+  }
+
+  Widget? _buildBottomBar(BuildContext context, AppUser? user, bool isTeacher) {
+    if (widget.job.status != JobStatus.active) return null;
+
+    if (user == null) {
+      // Guests can browse jobs freely but need an account to apply.
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            ),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            )
-          : null,
+            ),
+            child: const Text('Sign In to Apply', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+      );
+    }
+
+    if (!isTeacher) return null;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: _isApplying ? null : _applyToJob,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: _isApplying
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('Apply Now', style: TextStyle(fontSize: 16)),
+        ),
+      ),
     );
   }
 

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'login_screen.dart';
 import 'home_screen.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -42,38 +39,17 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    print('🔵 SPLASH: Iniciando navegación');
-
     // Esperar mínimo 2 segundos para mostrar el splash
     await Future.delayed(const Duration(seconds: 2));
-    print('🔵 SPLASH: Pasaron 2 segundos');
 
-    if (!mounted) {
-      print('🔴 SPLASH: Widget no montado, saliendo');
-      return;
-    }
-    print('🔵 SPLASH: Widget montado, obteniendo authProvider');
+    if (!mounted) return;
 
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      print('🔵 SPLASH: AuthProvider obtenido');
-
-      // Verificar si hay usuario autenticado
-      if (authProvider.isAuthenticated) {
-        print('🟢 SPLASH: Usuario autenticado, yendo a Home');
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      } else {
-        print('🟡 SPLASH: No autenticado, yendo a Login');
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    } catch (e, stackTrace) {
-      print('🔴 SPLASH ERROR: $e');
-      print('🔴 STACK: $stackTrace');
-    }
+    // HomeScreen handles both signed-in users and guests (browsing without
+    // an account is allowed for non-account-based features per App Store
+    // guideline 5.1.1).
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
   }
 
   @override

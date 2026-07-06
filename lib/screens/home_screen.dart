@@ -11,6 +11,8 @@ import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import 'classroom/classroom_screen.dart';
 import 'institution/manage_staff_screen.dart';
+import 'login_screen.dart';
+import 'signup_screen.dart';
 import '../widgets/sponsor_banner.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -49,47 +51,63 @@ class _HomeScreenState extends State<HomeScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
 
-    if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final isInstitution = user.userType == UserType.institution;
+    // Browsing Jobs, Materials and Benefits is allowed without an account
+    // (App Store guideline 5.1.1 — only account-based features require login).
+    final isGuest = user == null;
+    final isInstitution = user?.userType == UserType.institution;
 
     final navItems = [
       const _NavItem(icon: Icons.work_outline, activeIcon: Icons.work, label: 'Jobs'),
       const _NavItem(icon: Icons.folder_outlined, activeIcon: Icons.folder, label: 'Materials'),
-      const _NavItem(icon: Icons.card_giftcard_outlined, activeIcon: Icons.card_giftcard, label: 'Benefits'),
-      if (isInstitution)
-        const _NavItem(icon: Icons.group_work_outlined, activeIcon: Icons.group_work, label: 'Staff')
+      // Benefits requires an account (QR redemption is tied to the user's
+      // uid), so it's account-based and hidden from guests — only Jobs and
+      // Materials must be freely browsable per App Store guideline 5.1.1.
+      if (!isGuest)
+        const _NavItem(icon: Icons.card_giftcard_outlined, activeIcon: Icons.card_giftcard, label: 'Benefits'),
+      if (!isGuest)
+        if (isInstitution)
+          const _NavItem(icon: Icons.group_work_outlined, activeIcon: Icons.group_work, label: 'Staff')
+        else
+          const _NavItem(icon: Icons.school_outlined, activeIcon: Icons.school, label: 'Classroom'),
+      if (!isGuest)
+        const _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile')
       else
-        const _NavItem(icon: Icons.school_outlined, activeIcon: Icons.school, label: 'Classroom'),
-      const _NavItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile'),
+        const _NavItem(icon: Icons.login, activeIcon: Icons.login, label: 'Sign In'),
     ];
 
     final List<Widget> screens = [
       const JobsScreen(),
       const MaterialsScreen(),
-      const MarketplaceScreen(),
-      if (isInstitution) const ManageStaffScreen() else const ClassroomScreen(),
-      const ProfileScreen(),
+      if (!isGuest) const MarketplaceScreen(),
+      if (!isGuest)
+        if (isInstitution) const ManageStaffScreen() else const ClassroomScreen(),
+      if (!isGuest) const ProfileScreen() else const _GuestSignInTab(),
     ];
 
+    final profileTabIndex = isGuest ? -1 : navItems.length - 1;
     final primary = Theme.of(context).colorScheme.primary;
+
+    // Signing in/out changes the number of tabs (guest has 4, signed-in has
+    // 5). Clamp so a stale _selectedIndex never points past the new list.
+    final effectiveIndex = _selectedIndex.clamp(0, screens.length - 1);
+    if (effectiveIndex != _selectedIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _selectedIndex = effectiveIndex);
+      });
+    }
 
     return Scaffold(
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            if (_selectedIndex < 2) const SponsorBanner(),
+            if (effectiveIndex < 2) const SponsorBanner(),
             Expanded(
               child: MediaQuery.removePadding(
                 context: context,
                 removeTop: true,
                 child: IndexedStack(
-                  index: _selectedIndex,
+                  index: effectiveIndex,
                   children: screens,
                 ),
               ),
@@ -154,7 +172,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   size: 24,
                                 ),
                               ),
-                              if (index == 4 && _unreadNotifications > 0)
+                              if (index == profileTabIndex &&
+                                  _unreadNotifications > 0)
                                 Positioned(
                                   top: -4,
                                   right: -6,
@@ -219,4 +238,74 @@ class _NavItem {
     required this.activeIcon,
     required this.label,
   });
+}
+
+/// Shown instead of Profile when browsing without an account. Applying to
+/// jobs, uploading materials and other account-based features still require
+/// signing in.
+class _GuestSignInTab extends StatelessWidget {
+  const _GuestSignInTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Sign In')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.person_outline, size: 72, color: primary),
+              const SizedBox(height: 20),
+              const Text(
+                "You're browsing as a guest",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sign in to apply for jobs, upload materials, and access your profile.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Log In'),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Create Account'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
