@@ -13,7 +13,7 @@ import '../jobs/my_job_postings_screen.dart';
 import '../materials/materials_screen.dart';
 import '../institution/manage_staff_screen.dart';
 import '../teacher/my_institutions_screen.dart';
-import '../login_screen.dart';
+import '../home_screen.dart';
 import 'settings_screen.dart';
 import 'help_support_screen.dart';
 
@@ -302,9 +302,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               if (confirm == true && mounted) {
                 await authProvider.signOut();
+                if (!context.mounted) return;
+                // Signing out returns to guest browsing (Jobs/Materials),
+                // not a login wall — required by App Store guideline 5.1.1(v).
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
                   (route) => false,
                 );
               }

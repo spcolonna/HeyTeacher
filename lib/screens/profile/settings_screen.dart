@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
-import '../login_screen.dart';
+import '../home_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -280,8 +280,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
 
     if (ok) {
+      // Deleting the account returns to guest browsing (Jobs/Materials),
+      // not a login wall — required by App Store guideline 5.1.1(v).
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
         (_) => false,
       );
     } else {

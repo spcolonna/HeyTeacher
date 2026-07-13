@@ -130,6 +130,15 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // LoginScreen is always reached via push (from the guest "Sign In" tab
+      // or "Sign In to Apply"), so a visible back button lets users return to
+      // guest browsing without an account — required by App Store guideline
+      // 5.1.1(v).
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: true,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
