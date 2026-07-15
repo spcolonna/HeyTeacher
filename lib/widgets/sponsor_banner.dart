@@ -3,6 +3,7 @@ import 'package:hey_teacher_app/screens/marketplace/marketplace_screen.dart';
 import 'dart:async';
 import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
+import '../theme/theme.dart';
 
 class SponsorBanner extends StatefulWidget {
   const SponsorBanner({super.key});
@@ -63,7 +64,7 @@ class _SponsorBannerState extends State<SponsorBanner> {
             height: 130,
             margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(child: CircularProgressIndicator()),
@@ -118,16 +119,11 @@ class _BannerCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: [
-              Colors.purple.shade400,
-              Colors.blue.shade400,
-            ],
-          ),
+          borderRadius: BorderRadius.circular(Radii.md),
+          gradient: Theme.of(context).extension<AppDecor>()!.primaryGradient,
           boxShadow: [
             BoxShadow(
-              color: Colors.purple.shade200,
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3),
               blurRadius: 8,
               spreadRadius: 1,
             ),
@@ -206,7 +202,7 @@ class _BannerCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
@@ -247,7 +243,7 @@ class _DefaultBanner extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: const Icon(Icons.card_giftcard,

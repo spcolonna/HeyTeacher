@@ -1,96 +1,124 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../models/job_posting.dart';
 import '../../models/job_application.dart';
 import '../../services/job_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import 'teacher_profile_detail_screen.dart';
 
-class ApplicantsScreen extends StatelessWidget {
+class ApplicantsScreen extends StatefulWidget {
   final JobPosting job;
 
   const ApplicantsScreen({super.key, required this.job});
 
   @override
+  State<ApplicantsScreen> createState() => _ApplicantsScreenState();
+}
+
+class _ApplicantsScreenState extends State<ApplicantsScreen> {
+  final JobService _jobService = JobService();
+
+  @override
   Widget build(BuildContext context) {
-    final JobService jobService = JobService();
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(job.jobTitle),
+        title: Text(widget.job.jobTitle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(20),
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: Spacing.sm),
             child: Text(
-              '${job.applicationsCount} applicant${job.applicationsCount != 1 ? 's' : ''}',
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              '${widget.job.applicationsCount} applicant${widget.job.applicationsCount != 1 ? 's' : ''}',
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
             ),
           ),
         ),
       ),
       body: StreamBuilder<List<JobApplication>>(
-        stream: jobService.getApplicationsForJob(job.id),
+        stream: _jobService.getApplicationsForJob(widget.job.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonList();
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return ErrorState(onRetry: () => setState(() {}));
           }
 
           final applications = snapshot.data ?? [];
 
           if (applications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline,
-                      size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No applicants yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
-                  ),
-                ],
-              ),
+            return const EmptyState(
+              icon: Icons.people_outline,
+              title: 'No applicants yet',
+              message:
+                  'Teachers who apply to this job will appear here.',
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: applications.length,
-            itemBuilder: (context, index) {
-              final app = applications[index];
-              return _ApplicantCard(
-                application: app,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          TeacherProfileDetailScreen(application: app),
-                    ),
-                  );
-                },
-                onStatusChanged: (status, notes) async {
-                  await jobService.updateApplicationStatus(
-                    applicationId: app.id,
-                    status: status,
-                    notes: notes,
-                    teacherId: app.teacherId,
-                    jobTitle: app.jobTitle,
-                    institutionName: app.institutionName,
-                  );
-                },
-              );
+          return RefreshIndicator.adaptive(
+            onRefresh: () async {
+              setState(() {});
+              await Future.delayed(const Duration(milliseconds: 600));
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.lg),
+              itemCount: applications.length,
+              itemBuilder: (context, index) {
+                final app = applications[index];
+                return _ApplicantCard(
+                  application: app,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            TeacherProfileDetailScreen(application: app),
+                      ),
+                    );
+                  },
+                  onStatusChanged: (status, notes) async {
+                    await _jobService.updateApplicationStatus(
+                      applicationId: app.id,
+                      status: status,
+                      notes: notes,
+                      teacherId: app.teacherId,
+                      jobTitle: app.jobTitle,
+                      institutionName: app.institutionName,
+                    );
+                  },
+                )
+                    .animate(delay: (40 * min(index, 10)).ms)
+                    .fadeIn(duration: Motion.base, curve: Motion.curve)
+                    .slideY(begin: 0.06, curve: Motion.curve);
+              },
+            ),
           );
         },
       ),
     );
   }
 }
+
+StatusKind statusKindFor(ApplicationStatus status) => switch (status) {
+      ApplicationStatus.pending => StatusKind.warning,
+      ApplicationStatus.reviewed => StatusKind.info,
+      ApplicationStatus.accepted => StatusKind.success,
+      ApplicationStatus.rejected => StatusKind.error,
+    };
+
+String statusLabelFor(ApplicationStatus status) => switch (status) {
+      ApplicationStatus.pending => 'Pending',
+      ApplicationStatus.reviewed => 'Reviewed',
+      ApplicationStatus.accepted => 'Accepted',
+      ApplicationStatus.rejected => 'Rejected',
+    };
 
 class _ApplicantCard extends StatelessWidget {
   final JobApplication application;
@@ -102,32 +130,6 @@ class _ApplicantCard extends StatelessWidget {
     required this.onTap,
     required this.onStatusChanged,
   });
-
-  Color _getStatusColor(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.pending:
-        return Colors.orange;
-      case ApplicationStatus.reviewed:
-        return Colors.blue;
-      case ApplicationStatus.accepted:
-        return Colors.green;
-      case ApplicationStatus.rejected:
-        return Colors.red;
-    }
-  }
-
-  String _getStatusLabel(ApplicationStatus status) {
-    switch (status) {
-      case ApplicationStatus.pending:
-        return 'Pending';
-      case ApplicationStatus.reviewed:
-        return 'Reviewed';
-      case ApplicationStatus.accepted:
-        return 'Accepted';
-      case ApplicationStatus.rejected:
-        return 'Rejected';
-    }
-  }
 
   void _showUpdateStatusDialog(BuildContext context) {
     ApplicationStatus selectedStatus = application.status;
@@ -143,31 +145,28 @@ class _ApplicantCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Status:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+              Text('Status:',
+                  style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: Spacing.sm),
               ...ApplicationStatus.values.map((status) {
                 return RadioListTile<ApplicationStatus>(
-                  title: Text(_getStatusLabel(status)),
+                  title: Text(statusLabelFor(status)),
                   value: status,
                   groupValue: selectedStatus,
-                  onChanged: (value) => setState(() => selectedStatus = value!),
+                  onChanged: (value) =>
+                      setState(() => selectedStatus = value!),
                   dense: true,
                   contentPadding: EdgeInsets.zero,
                 );
               }),
-              const SizedBox(height: 8),
-              const Text('Notes:',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.sm),
+              Text('Notes:', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: Spacing.xs),
               TextField(
                 controller: notesController,
                 maxLines: 3,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Add a note...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                 ),
               ),
             ],
@@ -177,7 +176,7 @@ class _ApplicantCard extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
                 onStatusChanged(selectedStatus, notesController.text.trim());
                 Navigator.pop(context);
@@ -192,129 +191,77 @@ class _ApplicantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _getStatusColor(application.status);
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return AppCard(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.blue.shade100,
-                    child: application.teacherPhotoUrl != null
-                        ? ClipOval(
-                            child: Image.network(
-                              application.teacherPhotoUrl!,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Text(
-                                  application.teacherName.isNotEmpty
-                                      ? application.teacherName[0].toUpperCase()
-                                      : 'T',
-                                  style: TextStyle(
-                                    color: Colors.blue.shade700,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 24,
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                        : Text(
-                            application.teacherName.isNotEmpty
-                                ? application.teacherName[0].toUpperCase()
-                                : 'T',
-                            style: TextStyle(
-                              color: Colors.blue.shade700,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          application.teacherName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        if (application.teacherEmail != null)
-                          Text(
-                            application.teacherEmail!,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
-                            ),
-                          ),
-                      ],
+              AppAvatar(
+                url: application.teacherPhotoUrl,
+                name: application.teacherName,
+                radius: 28,
+              ),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      application.teacherName,
+                      style: textTheme.titleSmall,
                     ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor),
-                    ),
-                    child: Text(
-                      _getStatusLabel(application.status),
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                    if (application.teacherEmail != null)
+                      Text(
+                        application.teacherEmail!,
+                        style: textTheme.bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today,
-                      size: 13, color: Colors.grey.shade500),
-                  const SizedBox(width: 4),
-                  Text(
-                    DateFormat('MMM dd, yyyy').format(application.appliedAt),
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Tap to see profile →',
-                    style: TextStyle(color: Colors.blue.shade400, fontSize: 12),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showUpdateStatusDialog(context),
-                  icon: const Icon(Icons.edit, size: 15),
-                  label: const Text('Update Status'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
+                  ],
                 ),
+              ),
+              StatusChip(
+                label: statusLabelFor(application.status),
+                kind: statusKindFor(application.status),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: Spacing.sm),
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 13, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Text(
+                DateFormat('MMM dd, yyyy').format(application.appliedAt),
+                style: textTheme.bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const Spacer(),
+              Text(
+                'Tap to see profile →',
+                style: textTheme.bodySmall?.copyWith(color: scheme.primary),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm + 2),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showUpdateStatusDialog(context),
+              icon: const Icon(Icons.edit_outlined, size: 15),
+              label: const Text('Update Status'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(64, 40),
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

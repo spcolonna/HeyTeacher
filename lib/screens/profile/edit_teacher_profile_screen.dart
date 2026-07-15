@@ -318,7 +318,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text('Start date',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   Row(children: [
                     Expanded(
@@ -360,7 +360,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   ),
                   if (!isCurrent) ...[
                     Text('End date',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     const SizedBox(height: 6),
                     Row(children: [
                       Expanded(
@@ -577,7 +577,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.grey.shade200,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                     border: Border.all(color: primary, width: 3),
                   ),
                   child: ClipOval(
@@ -626,7 +626,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Profile completeness', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            Text('Profile completeness', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             Text('$pct%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primary)),
           ],
         ),
@@ -752,7 +752,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
           title: const Text('Native English speaker'),
           subtitle: Text(
             _nativeSpeaker ? 'Yes, English is my native language' : 'No, English is not my native language',
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           value: _nativeSpeaker,
           onChanged: (v) => setState(() => _nativeSpeaker = v),
@@ -794,7 +794,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               'Add your teaching and work history',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ..._workExperiences.asMap().entries.map((entry) {
@@ -804,7 +804,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: ListTile(
@@ -813,8 +813,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(exp.institutionName, style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
-                    Text(exp.dateRange, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                    Text(exp.institutionName, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    Text(exp.dateRange, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
                 isThreeLine: true,
@@ -894,7 +894,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         ),
         if (suggestions.isNotEmpty) ...[
           const SizedBox(height: 10),
-          Text('Suggestions:', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+          Text('Suggestions:', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -904,16 +904,16 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add, size: 12, color: Colors.grey.shade600),
+                    Icon(Icons.add, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 3),
-                    Text(s, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+                    Text(s, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -928,7 +928,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Cambridge & International', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        Text('Cambridge & International', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -949,7 +949,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
           }).toList(),
         ),
         const SizedBox(height: 16),
-        Text('Teaching Methodology', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+        Text('Teaching Methodology', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -1066,8 +1066,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
 
   Widget _avatarPlaceholder() {
     return Container(
-      color: Colors.grey.shade300,
-      child: Icon(Icons.person, size: 54, color: Colors.grey.shade600),
+      color: Theme.of(context).colorScheme.outlineVariant,
+      child: Icon(Icons.person, size: 54, color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 }

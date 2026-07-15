@@ -211,7 +211,7 @@ class _CreateMeetingScreenState extends State<CreateMeetingScreen> {
             const SizedBox(height: 12),
             Text(
               'Meeting: ${dateFmt.format(_scheduledAt)} — ${dateFmt.format(_scheduledAt.add(_duration)).split('·').last.trim()}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
             ),
             const SizedBox(height: 32),
             SizedBox(

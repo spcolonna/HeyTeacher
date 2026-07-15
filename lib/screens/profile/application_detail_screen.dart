@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/job_application.dart';
+import '../../theme/theme.dart';
 import '../../models/job_posting.dart';
 import '../../services/job_service.dart';
 
@@ -100,11 +101,7 @@ class _Header extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade500, Colors.purple.shade400],
-        ),
+        gradient: Theme.of(context).extension<AppDecor>()!.primaryGradient,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,7 +304,7 @@ class _TimelineSection extends StatelessWidget {
                           step.subtitle!,
                           style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey.shade500),
+                              color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                     ],
                   ),
@@ -443,9 +440,9 @@ class _BodyText extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Text(text,
           style: TextStyle(

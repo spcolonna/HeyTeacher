@@ -101,7 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
         bottom: false,
         child: Column(
           children: [
-            if (effectiveIndex < 2) const SponsorBanner(),
+            // Benefits/sponsors require an account (same as the Benefits tab),
+            // so the banner is skipped entirely for guests to avoid a
+            // Firestore permission-denied on the `benefits` collection.
+            if (!isGuest && effectiveIndex < 2) const SponsorBanner(),
             Expanded(
               child: MediaQuery.removePadding(
                 context: context,
@@ -116,11 +119,20 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.fromLTRB(16, 8, 16, 14),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.surfaceContainerHigh
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(28),
+                border: Theme.of(context).brightness == Brightness.dark
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant)
+                    : null,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.10),
+                    color: Colors.black.withValues(
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.30
+                            : 0.10),
                     blurRadius: 20,
                     spreadRadius: 0,
                     offset: const Offset(0, 6),
@@ -168,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   key: ValueKey(isSelected),
                                   color: isSelected
                                       ? primary
-                                      : Colors.blueGrey.shade300,
+                                      : Theme.of(context).colorScheme.onSurfaceVariant,
                                   size: 24,
                                 ),
                               ),
@@ -209,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   : FontWeight.w400,
                               color: isSelected
                                   ? primary
-                                  : Colors.blueGrey.shade300,
+                                  : Theme.of(context).colorScheme.onSurfaceVariant,
                               letterSpacing: isSelected ? 0.2 : 0,
                             ),
                             child: Text(navItems[index].label),

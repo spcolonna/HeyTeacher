@@ -1,11 +1,15 @@
 import 'dart:io' show Platform;
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
 import '../providers/auth_provider.dart';
 import '../models/app_user.dart';
+import '../theme/theme.dart';
+import '../widgets/widgets.dart';
 import 'home_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -42,10 +46,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return 'Phone number is required';
     }
 
-    // Remover espacios y caracteres especiales
     String cleaned = value.replaceAll(RegExp(r'[^\d+]'), '');
 
-    // Debe tener al menos 8 dígitos
     if (cleaned.length < 8) {
       return 'Phone number must have at least 8 digits';
     }
@@ -58,7 +60,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Limpiar el teléfono antes de enviarlo
     String cleanedPhone =
         _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
 
@@ -77,11 +78,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Sign up failed'),
-          backgroundColor: Colors.red,
-        ),
+      showAppSnack(
+        context,
+        authProvider.errorMessage ?? 'Sign up failed',
+        type: AppSnackType.error,
       );
     }
   }
@@ -91,19 +91,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Usar Google SignIn pero luego crear usuario con datos del formulario
     try {
       final credential = await authProvider.signInWithGoogle();
 
       if (!mounted) return;
 
       if (credential.isExisting) {
-        // Ya existe, ir a home
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       } else if (credential.isNewUser) {
-        // Nuevo usuario: crear con datos del formulario
         final ok = await authProvider.createGoogleUser(
           firebaseUser: credential.firebaseUser!,
           userType: _selectedUserType,
@@ -115,23 +112,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
             MaterialPageRoute(builder: (_) => const HomeScreen()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text(authProvider.errorMessage ?? 'Error creating account'),
-              backgroundColor: Colors.red,
-            ),
+          showAppSnack(
+            context,
+            authProvider.errorMessage ?? 'Error creating account',
+            type: AppSnackType.error,
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Google Sign-Up cancelled'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        showAppSnack(context, 'Google Sign-Up cancelled');
       }
     }
   }
@@ -162,23 +152,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
             MaterialPageRoute(builder: (_) => const HomeScreen()),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text(authProvider.errorMessage ?? 'Error creating account'),
-              backgroundColor: Colors.red,
-            ),
+          showAppSnack(
+            context,
+            authProvider.errorMessage ?? 'Error creating account',
+            type: AppSnackType.error,
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Apple Sign-Up cancelled'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        showAppSnack(context, 'Apple Sign-Up cancelled');
       }
     }
   }
@@ -189,390 +172,359 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final decor = Theme.of(context).extension<AppDecor>()!;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 24),
-
-                // User type selection
-                const Text(
-                  'I am a:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-
-                Row(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(Spacing.xl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Teacher option
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedUserType = UserType.teacher;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _selectedUserType == UserType.teacher
-                                ? Colors.blue.shade50
-                                : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _selectedUserType == UserType.teacher
-                                  ? Colors.blue
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.school,
-                                size: 48,
-                                color: _selectedUserType == UserType.teacher
-                                    ? Colors.blue
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Teacher',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: _selectedUserType == UserType.teacher
-                                      ? Colors.blue
-                                      : Colors.grey.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Find jobs & access teaching materials',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
+                    const SizedBox(height: Spacing.lg),
+
+                    // User type selection
+                    Text(
+                      'I am a:',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: Spacing.lg),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _UserTypeCard(
+                            icon: Icons.school,
+                            title: 'Teacher',
+                            subtitle: 'Find jobs & access teaching materials',
+                            color: scheme.primary,
+                            selected: _selectedUserType == UserType.teacher,
+                            onTap: () => setState(
+                                () => _selectedUserType = UserType.teacher),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-
-                    // Institution option
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedUserType = UserType.institution;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _selectedUserType == UserType.institution
-                                ? Colors.purple.shade50
-                                : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _selectedUserType == UserType.institution
-                                  ? Colors.purple
-                                  : Colors.grey.shade300,
-                              width: 2,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.business,
-                                size: 48,
-                                color: _selectedUserType == UserType.institution
-                                    ? Colors.purple
-                                    : Colors.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Institution',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      _selectedUserType == UserType.institution
-                                          ? Colors.purple
-                                          : Colors.grey.shade700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Post jobs & find qualified teachers',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
+                        const SizedBox(width: Spacing.md),
+                        Expanded(
+                          child: _UserTypeCard(
+                            icon: Icons.business,
+                            title: 'Institution',
+                            subtitle: 'Post jobs & find qualified teachers',
+                            color: scheme.secondary,
+                            selected:
+                                _selectedUserType == UserType.institution,
+                            onTap: () => setState(() =>
+                                _selectedUserType = UserType.institution),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: Spacing.xl),
+
+                    // Name field
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: _selectedUserType == UserType.teacher
+                            ? 'Full Name *'
+                            : 'Institution Name *',
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Name field
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: _selectedUserType == UserType.teacher
-                        ? 'Full Name *'
-                        : 'Institution Name *',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email *',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Phone field (NEW - REQUIRED)
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'[\d\s\+\-\(\)]')),
-                  ],
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number *',
-                    hintText: '+598 99 123 456',
-                    prefixIcon: const Icon(Icons.phone),
-                    helperText: 'Required for WhatsApp notifications',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: _validatePhone,
-                ),
-                const SizedBox(height: 16),
-
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password *',
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.lg),
 
-                // Confirm Password field
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password *',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                    // Email field
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email *',
+                        prefixIcon: Icon(Icons.email_outlined),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
                       },
                     ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.lg),
 
-                // Info box about WhatsApp
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: Colors.green.shade700, size: 20),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'We\'ll use WhatsApp to send you job alerts and important updates',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.green.shade900,
+                    // Phone field
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'[\d\s\+\-\(\)]')),
+                      ],
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number *',
+                        hintText: '+598 99 123 456',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                        helperText: 'Required for WhatsApp notifications',
+                      ),
+                      validator: _validatePhone,
+                    ),
+                    const SizedBox(height: Spacing.lg),
+
+                    // Password field
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Password *',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
                           ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
                         ),
                       ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: Spacing.lg),
+
+                    // Confirm Password field
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password *',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword =
+                                  !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: Spacing.xl),
+
+                    // Info box about WhatsApp
+                    Container(
+                      padding: const EdgeInsets.all(Spacing.md),
+                      decoration: BoxDecoration(
+                        color: decor.success.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(Radii.sm),
+                        border: Border.all(
+                          color: decor.success.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              color: decor.success, size: 20),
+                          const SizedBox(width: Spacing.md),
+                          Expanded(
+                            child: Text(
+                              'We\'ll use WhatsApp to send you job alerts and important updates',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: scheme.onSurface),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: Spacing.xl),
+
+                    // Sign up button
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        return ElevatedButton(
+                          onPressed:
+                              authProvider.isLoading ? null : _handleSignUp,
+                          child: authProvider.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Create Account'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: Spacing.lg),
+
+                    // Sign up with Apple (required on iOS by App Store
+                    // guideline 4.8)
+                    if (_showAppleSignIn) ...[
+                      SignInWithAppleButton(
+                        onPressed: _handleAppleSignUp,
+                        text: 'Sign up with Apple',
+                        height: 52,
+                        style: Theme.of(context).brightness == Brightness.dark
+                            ? SignInWithAppleButtonStyle.white
+                            : SignInWithAppleButtonStyle.black,
+                        borderRadius: BorderRadius.circular(Radii.md),
+                      ),
+                      const SizedBox(height: Spacing.lg),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 24),
 
-                // Sign up button
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, _) {
-                    return ElevatedButton(
-                      onPressed: authProvider.isLoading ? null : _handleSignUp,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // Google Sign-Up
+                    Consumer<AuthProvider>(
+                      builder: (context, authProvider, _) {
+                        return OutlinedButton.icon(
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : _handleGoogleSignUp,
+                          icon: CachedNetworkImage(
+                            imageUrl:
+                                'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                            width: 20,
+                            height: 20,
+                            errorWidget: (_, __, ___) =>
+                                const Icon(Icons.account_circle, size: 20),
+                          ),
+                          label: const Text('Sign up with Google'),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: Spacing.lg),
+
+                    // Login link
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account?',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
-                      ),
-                      child: authProvider.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Create Account',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Sign up with Apple (required on iOS by App Store guideline 4.8)
-                if (_showAppleSignIn) ...[
-                  SignInWithAppleButton(
-                    onPressed: _handleAppleSignUp,
-                    text: 'Sign up with Apple',
-                    height: 50,
-                    style: SignInWithAppleButtonStyle.black,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Google Sign-Up
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, _) {
-                    return OutlinedButton.icon(
-                      onPressed:
-                          authProvider.isLoading ? null : _handleGoogleSignUp,
-                      icon: Image.network(
-                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        width: 20,
-                        height: 20,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.account_circle, size: 20),
-                      ),
-                      label: const Text('Sign up with Google'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Log In'),
                         ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Login link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Already have an account?'),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Log In'),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UserTypeCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _UserTypeCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: Motion.fast,
+        curve: Motion.curve,
+        padding: const EdgeInsets.all(Spacing.lg),
+        decoration: BoxDecoration(
+          color: selected
+              ? color.withValues(alpha: 0.08)
+              : scheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(Radii.md),
+          border: Border.all(
+            color: selected ? color : scheme.outlineVariant,
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 48,
+              color: selected ? color : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(height: Spacing.sm),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: selected ? color : scheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: scheme.onSurfaceVariant, fontSize: 11),
+            ),
+          ],
         ),
       ),
     );

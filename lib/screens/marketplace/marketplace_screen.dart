@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
+import '../../widgets/widgets.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -54,36 +55,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   : _benefitService.getAllBenefits(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonList();
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return ErrorState(onRetry: () => setState(() {}));
                 }
 
                 final benefits = snapshot.data ?? [];
 
                 if (benefits.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.card_giftcard,
-                            size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No benefits available',
-                          style: TextStyle(
-                              fontSize: 18, color: Colors.grey.shade600),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Check back soon for new partner offers!',
-                          style: TextStyle(
-                              fontSize: 14, color: Colors.grey.shade500),
-                        ),
-                      ],
-                    ),
+                  return const EmptyState(
+                    icon: Icons.card_giftcard,
+                    title: 'No benefits available',
+                    message: 'Check back soon for new partner offers!',
                   );
                 }
 
@@ -181,7 +166,7 @@ class BenefitCard extends StatelessWidget {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.business, size: 32, color: Colors.grey),
@@ -195,7 +180,7 @@ class BenefitCard extends StatelessWidget {
                       benefit.sponsorName,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -227,7 +212,7 @@ class BenefitCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey.shade400),
+              Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ],
           ),
         ),
@@ -261,7 +246,10 @@ class BenefitDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.purple.shade400, Colors.blue.shade400],
+                  colors: [
+                    Theme.of(context).colorScheme.secondary,
+                    Theme.of(context).colorScheme.primary,
+                  ],
                 ),
               ),
               child: Column(
@@ -296,7 +284,7 @@ class BenefitDetailScreen extends StatelessWidget {
                     child: Text(
                       benefit.discount,
                       style: TextStyle(
-                        color: Colors.purple.shade700,
+                        color: Theme.of(context).colorScheme.primary,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -339,7 +327,7 @@ class BenefitDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.shade300,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                             blurRadius: 10,
                             spreadRadius: 2,
                           ),
@@ -358,11 +346,11 @@ class BenefitDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(Icons.calendar_today,
-                          size: 16, color: Colors.grey.shade600),
+                          size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         'Valid until ${DateFormat('MMM dd, yyyy').format(benefit.validUntil)}',
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -378,7 +366,7 @@ class BenefitDetailScreen extends StatelessWidget {
                     Text(
                       benefit.termsAndConditions!,
                       style:
-                          TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                          TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ],

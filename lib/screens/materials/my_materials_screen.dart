@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/teaching_material.dart';
 import '../../services/material_service.dart';
+import '../../widgets/widgets.dart';
 import '../materials/upload_material_screen.dart';
 import '../materials/material_detail_screen.dart';
 
@@ -36,41 +37,33 @@ class MyMaterialsScreen extends StatelessWidget {
         stream: materialService.getMaterialsByUser(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonGrid();
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return const EmptyState(
+              icon: Icons.cloud_off_outlined,
+              title: 'Could not load your materials',
+              message: 'Please check your connection and try again.',
+            );
           }
 
           final materials = snapshot.data ?? [];
 
           if (materials.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.folder_off, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No materials uploaded yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+            return EmptyState(
+              icon: Icons.folder_open_outlined,
+              title: 'No materials uploaded yet',
+              message: 'Share your teaching resources with the community.',
+              ctaLabel: 'Upload Your First Material',
+              onCta: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const UploadMaterialScreen(),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const UploadMaterialScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.upload),
-                    label: const Text('Upload Your First Material'),
-                  ),
-                ],
-              ),
+                );
+              },
             );
           }
 
@@ -209,7 +202,7 @@ class _MyMaterialCard extends StatelessWidget {
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: _getCategoryColor(material.category)
-                                .withOpacity(0.1),
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -235,24 +228,24 @@ class _MyMaterialCard extends StatelessWidget {
                 material.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.download, size: 14, color: Colors.grey.shade500),
+                  Icon(Icons.download, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     '${material.downloadCount} downloads',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                   ),
                   const SizedBox(width: 12),
                   Icon(Icons.calendar_today,
-                      size: 14, color: Colors.grey.shade500),
+                      size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     DateFormat('MMM dd, yyyy').format(material.uploadedAt),
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                   ),
                 ],
               ),

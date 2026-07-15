@@ -1,10 +1,15 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/app_user.dart';
 import '../../models/job_posting.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/job_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import 'job_detail_screen.dart';
 import 'create_job_screen.dart';
 
@@ -84,9 +89,9 @@ class _JobsScreenState extends State<JobsScreen> {
       body: Column(
         children: [
           // Search and filter section
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey.shade100,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                Spacing.lg, Spacing.sm, Spacing.lg, Spacing.sm),
             child: Row(
               children: [
                 Expanded(
@@ -104,36 +109,30 @@ class _JobsScreenState extends State<JobsScreen> {
                               },
                             )
                           : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
                     ),
                     onChanged: (value) {
                       setState(() => _searchText = value);
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sm),
                 Stack(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.filter_list),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.tune_rounded),
                       onPressed: _showFiltersDialog,
                     ),
                     if (_locationFilter != null ||
                         _shiftFilters != null ||
                         _levelFilters != null)
                       Positioned(
-                        right: 8,
-                        top: 8,
+                        right: 6,
+                        top: 6,
                         child: Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -156,69 +155,73 @@ class _JobsScreenState extends State<JobsScreen> {
                     ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonList();
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return ErrorState(onRetry: () => setState(() {}));
                 }
 
                 List<JobPosting> jobs = snapshot.data ?? [];
                 jobs = _filterJobs(jobs);
 
                 if (jobs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.work_off,
-                            size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchText.isNotEmpty || _locationFilter != null
-                              ? 'No jobs found'
-                              : user?.userType == UserType.institution
-                                  ? 'No jobs posted yet'
-                                  : 'No jobs available',
-                          style: TextStyle(
-                              fontSize: 18, color: Colors.grey.shade600),
-                        ),
-                        if (user?.userType == UserType.institution) ...[
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const CreateJobScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text('Post your first job'),
-                          ),
-                        ],
-                      ],
-                    ),
+                  final isInstitution =
+                      user?.userType == UserType.institution;
+                  return EmptyState(
+                    icon: Icons.work_outline,
+                    title: _searchText.isNotEmpty || _locationFilter != null
+                        ? 'No jobs found'
+                        : isInstitution
+                            ? 'No jobs posted yet'
+                            : 'No jobs available',
+                    message: _searchText.isNotEmpty || _locationFilter != null
+                        ? 'Try adjusting your search or filters.'
+                        : isInstitution
+                            ? 'Post your first job to reach qualified teachers.'
+                            : 'New opportunities are posted regularly — check back soon!',
+                    ctaLabel:
+                        isInstitution ? 'Post your first job' : null,
+                    onCta: isInstitution
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CreateJobScreen(),
+                              ),
+                            );
+                          }
+                        : null,
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: jobs.length,
-                  itemBuilder: (context, index) {
-                    final job = jobs[index];
-                    return JobCard(
-                      job: job,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => JobDetailScreen(job: job),
-                          ),
-                        );
-                      },
-                    );
+                return RefreshIndicator.adaptive(
+                  onRefresh: () async {
+                    setState(() {});
+                    await Future.delayed(const Duration(milliseconds: 600));
                   },
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(Spacing.lg),
+                    itemCount: jobs.length,
+                    itemBuilder: (context, index) {
+                      final job = jobs[index];
+                      return JobCard(
+                        job: job,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => JobDetailScreen(job: job),
+                            ),
+                          );
+                        },
+                      )
+                          .animate(delay: (40 * min(index, 10)).ms)
+                          .fadeIn(duration: Motion.base, curve: Motion.curve)
+                          .slideY(begin: 0.06, curve: Motion.curve);
+                    },
+                  ),
                 );
               },
             ),
@@ -237,108 +240,88 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppCard(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      job.jobTitle,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (job.status == JobStatus.active)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Active',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                job.institutionName,
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.location_on,
-                      size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    // ← AGREGADO: Flexible para location
-                    child: Text(
-                      job.location,
-                      style: TextStyle(color: Colors.grey.shade600),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    // ← AGREGADO: Flexible para shifts
-                    child: Text(
-                      job.shifts
-                          .map((s) => s.toString().split('.').last)
-                          .join(', '),
-                      style: TextStyle(color: Colors.grey.shade600),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
-                children: job.levels.map((level) {
-                  return Chip(
-                    label: Text(
-                      level.toString().split('.').last,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    padding: EdgeInsets.zero,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  );
-                }).toList(),
-              ),
-              if (job.applicationsCount > 0) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '${job.applicationsCount} application${job.applicationsCount != 1 ? 's' : ''}',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
+              Expanded(
+                child: Text(
+                  job.jobTitle,
+                  style: textTheme.titleMedium,
                 ),
-              ],
+              ),
+              if (job.status == JobStatus.active)
+                const StatusChip(label: 'Active', kind: StatusKind.success),
             ],
           ),
-        ),
+          const SizedBox(height: Spacing.sm),
+          Text(
+            job.institutionName,
+            style: textTheme.bodyLarge
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: Spacing.sm),
+          Row(
+            children: [
+              Icon(Icons.location_on_outlined,
+                  size: 16, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Flexible(
+                child: Text(
+                  job.location,
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: Spacing.lg),
+              Icon(Icons.schedule_outlined,
+                  size: 16, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Flexible(
+                child: Text(
+                  job.shifts
+                      .map((s) => s.toString().split('.').last)
+                      .join(', '),
+                  style: textTheme.bodyMedium
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm),
+          Wrap(
+            spacing: Spacing.sm,
+            runSpacing: Spacing.xs,
+            children: job.levels.map((level) {
+              return Chip(
+                label: Text(
+                  level.toString().split('.').last,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              );
+            }).toList(),
+          ),
+          if (job.applicationsCount > 0) ...[
+            const SizedBox(height: Spacing.sm),
+            Text(
+              '${job.applicationsCount} application${job.applicationsCount != 1 ? 's' : ''}',
+              style: textTheme.bodyMedium?.copyWith(
+                color: scheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

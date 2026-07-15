@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import '../../models/app_user.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/firestore_wrapper.dart';
@@ -26,7 +28,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   TeacherProfile? _teacherProfile;
-  bool _isLoadingProfile = true;
 
   @override
   void initState() {
@@ -37,24 +38,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadTeacherProfile() async {
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     if (user == null || user.userType != UserType.teacher) {
-      setState(() => _isLoadingProfile = false);
       return;
     }
 
     try {
       DocumentSnapshot doc =
           await FirestoreWrapper.getDocument('teacher_profiles', user.uid);
-      if (doc.exists) {
+      if (doc.exists && mounted) {
         setState(() {
           _teacherProfile = TeacherProfile.fromFirestore(doc);
-          _isLoadingProfile = false;
         });
-      } else {
-        setState(() => _isLoadingProfile = false);
       }
-    } catch (e) {
-      print('Error loading teacher profile: $e');
-      setState(() => _isLoadingProfile = false);
+    } catch (_) {
+      // Profile stays null; header falls back to initials avatar.
     }
   }
 
@@ -92,9 +88,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade400, Colors.purple.shade400],
-              ),
+              gradient:
+                  Theme.of(context).extension<AppDecor>()!.primaryGradient,
             ),
             child: Row(
               children: [
@@ -329,8 +324,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 44, width: 44,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade200),
-                    child: Center(child: Text('SPC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade500))),
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).colorScheme.surfaceContainerHigh),
+                    child: Center(child: Text('SPC', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant))),
                   ),
                 ),
               ),
@@ -338,8 +333,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Made by SPC', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
-                  Text('v1.0.2', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                  Text('Made by SPC', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  Text('v1.0.1', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             ],
@@ -357,51 +352,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: CircleAvatar(
-        radius: 36,
-        backgroundColor: Colors.white,
-        child: photoUrl != null
-            ? ClipOval(
-                child: Image.network(
-                  photoUrl,
-                  width: 72,
-                  height: 72,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return _buildPlaceholderAvatar(displayName);
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                ),
-              )
-            : _buildPlaceholderAvatar(displayName),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderAvatar(String displayName) {
-    return Text(
-      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue.shade700,
-      ),
+      child: AppAvatar(url: photoUrl, name: displayName, radius: 36),
     );
   }
 

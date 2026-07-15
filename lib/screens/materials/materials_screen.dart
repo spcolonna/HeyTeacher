@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../models/institution_staff.dart';
 import '../../models/teaching_material.dart';
@@ -8,6 +10,8 @@ import '../../models/app_user.dart';
 import '../../services/material_service.dart';
 import '../../services/staff_service.dart';
 import '../../providers/auth_provider.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import 'upload_material_screen.dart';
 import 'material_detail_screen.dart';
 
@@ -112,11 +116,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               stream: _materialService.getMaterialsForUser(_institutionIds),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonGrid();
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return ErrorState(onRetry: () => setState(() {}));
                 }
 
                 final all = snapshot.data ?? [];
@@ -125,60 +129,59 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     : all.where((m) => m.category == _selectedCategory).toList();
 
                 if (materials.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.folder_off,
-                            size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No materials available',
-                          style: TextStyle(
-                              fontSize: 18, color: Colors.grey.shade600),
-                        ),
-                        if (canUpload) ...[
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () => Navigator.push(
+                  return EmptyState(
+                    icon: Icons.folder_open_outlined,
+                    title: 'No materials available',
+                    message: _selectedCategory != null
+                        ? 'No materials in this category yet.'
+                        : 'Teaching resources shared by the community will appear here.',
+                    ctaLabel: canUpload ? 'Upload First Material' : null,
+                    onCta: canUpload
+                        ? () => Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const UploadMaterialScreen(),
                               ),
-                            ),
-                            icon: const Icon(Icons.upload),
-                            label: const Text('Upload First Material'),
-                          ),
-                        ],
-                      ],
-                    ),
+                            )
+                        : null,
                   );
                 }
 
-                return GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 0.65,
-                  ),
-                  itemCount: materials.length,
-                  itemBuilder: (context, index) {
-                    final material = materials[index];
-                    return MaterialCard(
-                      material: material,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                MaterialDetailScreen(material: material),
-                          ),
-                        );
-                      },
-                    );
+                return RefreshIndicator.adaptive(
+                  onRefresh: () async {
+                    setState(() {});
+                    await Future.delayed(const Duration(milliseconds: 600));
                   },
+                  child: GridView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(Spacing.lg),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: Spacing.lg,
+                      mainAxisSpacing: Spacing.lg,
+                      childAspectRatio: 0.65,
+                    ),
+                    itemCount: materials.length,
+                    itemBuilder: (context, index) {
+                      final material = materials[index];
+                      return MaterialCard(
+                        material: material,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MaterialDetailScreen(material: material),
+                            ),
+                          );
+                        },
+                      )
+                          .animate(delay: (40 * min(index, 10)).ms)
+                          .fadeIn(duration: Motion.base, curve: Motion.curve)
+                          .slideY(begin: 0.06, curve: Motion.curve);
+                    },
+                  ),
                 );
               },
             ),
@@ -238,18 +241,21 @@ class MaterialCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Thumbnail or placeholder
-            Container(
-              height: 120,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: _getCategoryColors(material.category),
+            Hero(
+              tag: 'material-${material.id}',
+              child: Container(
+                height: 120,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: _getCategoryColors(material.category),
+                  ),
                 ),
-              ),
-              child: Icon(
-                _getCategoryIcon(material.category),
-                size: 48,
-                color: Colors.white,
+                child: Icon(
+                  _getCategoryIcon(material.category),
+                  size: 48,
+                  color: Colors.white,
+                ),
               ),
             ),
 
@@ -276,7 +282,7 @@ class MaterialCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const Spacer(),
@@ -303,14 +309,14 @@ class MaterialCard extends StatelessWidget {
                         Icon(
                           Icons.download,
                           size: 14,
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           '${material.downloadCount}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],

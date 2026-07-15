@@ -43,13 +43,13 @@ class MyInstitutionsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text('No institution associations yet',
                       style: TextStyle(
-                          fontSize: 16, color: Colors.grey.shade500)),
+                          fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   Text(
                     'Institutions will send you requests to join their staff',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 13, color: Colors.grey.shade400),
+                        fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -152,7 +152,7 @@ class _PendingCardState extends State<_PendingCard> {
                     const SizedBox(height: 2),
                     Text('Wants you to join their staff',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600)),
+                            fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ]),
             ),
             Container(
@@ -276,7 +276,7 @@ class _HistoryCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
-      color: Colors.grey.shade50,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
@@ -294,12 +294,12 @@ class _HistoryCard extends StatelessWidget {
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
-                          color: Colors.grey.shade600)),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 2),
                   Text(
                     isRemoved ? 'Past employment' : 'Request declined',
                     style:
-                        TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                        TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ]),
           ),

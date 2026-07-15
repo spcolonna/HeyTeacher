@@ -129,10 +129,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
           children: [
             TextFormField(
               controller: _jobTitleController,
-              decoration: InputDecoration(
-                labelText: 'Job Title *',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Job Title *'),
               validator: (value) =>
                   value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -140,10 +137,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
             TextFormField(
               controller: _institutionNameController,
-              decoration: InputDecoration(
-                labelText: 'Institution Name *',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Institution Name *'),
               validator: (value) =>
                   value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -152,10 +146,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
             TextFormField(
               controller: _descriptionController,
               maxLines: 4,
-              decoration: InputDecoration(
-                labelText: 'Job Description *',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Job Description *'),
               validator: (value) =>
                   value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -163,10 +154,7 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
 
             TextFormField(
               controller: _locationController,
-              decoration: InputDecoration(
-                labelText: 'Location *',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Location *'),
               validator: (value) =>
                   value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -244,20 +232,13 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
             TextFormField(
               controller: _hoursController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Hours per Week',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Hours per Week'),
             ),
             const SizedBox(height: 16),
 
             TextFormField(
               controller: _salaryController,
-              decoration: InputDecoration(
-                labelText: 'Salary Range',
-                hintText: 'e.g., \$1000-1500/month',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Salary Range', hintText: 'e.g., \$1000-1500/month'),
             ),
             const SizedBox(height: 32),
 

@@ -1,7 +1,13 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../models/job_application.dart';
 import '../../services/job_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
+import '../jobs/applicants_screen.dart' show statusKindFor, statusLabelFor;
 import 'application_detail_screen.dart';
 
 class MyApplicationsScreen extends StatefulWidget {
@@ -31,10 +37,10 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
         stream: JobService().getApplicationsByTeacher(widget.teacherId),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonList();
           }
           if (snap.hasError) {
-            return Center(child: Text('Error: ${snap.error}'));
+            return ErrorState(onRetry: () => setState(() {}));
           }
 
           final all = snap.data ?? [];
@@ -61,22 +67,43 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? _EmptyState(filtered: _filter != null)
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _ApplicationCard(
-                          application: filtered[i],
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ApplicationDetailScreen(
-                                application: filtered[i],
+                    ? EmptyState(
+                        icon: Icons.inbox_outlined,
+                        title: _filter != null
+                            ? 'No applications with this status'
+                            : 'No applications yet',
+                        message: _filter != null
+                            ? 'Try selecting a different filter.'
+                            : 'Browse the Job Board and apply to positions that match your profile.',
+                      )
+                    : RefreshIndicator.adaptive(
+                        onRefresh: () async {
+                          setState(() {});
+                          await Future.delayed(
+                              const Duration(milliseconds: 600));
+                        },
+                        child: ListView.separated(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding:
+                              const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
+                          itemBuilder: (_, i) => _ApplicationCard(
+                            application: filtered[i],
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ApplicationDetailScreen(
+                                  application: filtered[i],
+                                ),
                               ),
                             ),
-                          ),
+                          )
+                              .animate(delay: (40 * min(i, 10)).ms)
+                              .fadeIn(
+                                  duration: Motion.base, curve: Motion.curve)
+                              .slideY(begin: 0.06, curve: Motion.curve),
                         ),
                       ),
               ),
@@ -96,7 +123,7 @@ class _SummaryBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final decor = Theme.of(context).extension<AppDecor>()!;
     final total = applications.length;
     final accepted =
         applications.where((a) => a.status == ApplicationStatus.accepted).length;
@@ -107,10 +134,8 @@ class _SummaryBar extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primary, Theme.of(context).colorScheme.secondary],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        gradient: decor.primaryGradient,
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -215,122 +240,74 @@ class _ApplicationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final status = application.status;
 
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return AppCard(
+      onTap: onTap,
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          application.jobTitle,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          application.institutionName,
-                          style: TextStyle(
-                              color: Colors.grey.shade600, fontSize: 13),
-                        ),
-                      ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      application.jobTitle,
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _StatusBadge(status: status),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      application.institutionName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today_outlined,
-                      size: 13, color: Colors.grey.shade400),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Applied ${DateFormat('MMM d, yyyy').format(application.appliedAt)}',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade500),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'View details',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color:
-                            Theme.of(context).colorScheme.primary),
-                  ),
-                  Icon(Icons.chevron_right,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary),
-                ],
+              const SizedBox(width: Spacing.sm),
+              StatusChip(
+                label: statusLabelFor(status),
+                kind: statusKindFor(status),
               ),
-              if (application.status == ApplicationStatus.accepted ||
-                  application.status == ApplicationStatus.rejected) ...[
-                const SizedBox(height: 10),
-                _StatusProgressBar(status: application.status),
-              ],
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Status badge ──────────────────────────────────────────────────────────────
-
-class _StatusBadge extends StatelessWidget {
-  final ApplicationStatus status;
-  const _StatusBadge({required this.status});
-
-  static const _config = {
-    ApplicationStatus.pending: (
-      label: 'Pending',
-      color: Color(0xFFF59E0B),
-      bg: Color(0xFFFFFBEB),
-    ),
-    ApplicationStatus.reviewed: (
-      label: 'Reviewed',
-      color: Color(0xFF3B82F6),
-      bg: Color(0xFFEFF6FF),
-    ),
-    ApplicationStatus.accepted: (
-      label: 'Accepted',
-      color: Color(0xFF10B981),
-      bg: Color(0xFFECFDF5),
-    ),
-    ApplicationStatus.rejected: (
-      label: 'Rejected',
-      color: Color(0xFFEF4444),
-      bg: Color(0xFFFEF2F2),
-    ),
-  };
-
-  @override
-  Widget build(BuildContext context) {
-    final cfg = _config[status]!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: cfg.bg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cfg.color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        cfg.label,
-        style: TextStyle(
-            color: cfg.color, fontSize: 12, fontWeight: FontWeight.w600),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 13, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Text(
+                'Applied ${DateFormat('MMM d, yyyy').format(application.appliedAt)}',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const Spacer(),
+              Text(
+                'View details',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.primary),
+              ),
+              Icon(Icons.chevron_right, size: 16, color: scheme.primary),
+            ],
+          ),
+          if (application.status == ApplicationStatus.accepted ||
+              application.status == ApplicationStatus.rejected) ...[
+            const SizedBox(height: 10),
+            _StatusProgressBar(status: application.status),
+          ],
+        ],
       ),
     );
   }
@@ -344,8 +321,10 @@ class _StatusProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final decor = Theme.of(context).extension<AppDecor>()!;
     final isAccepted = status == ApplicationStatus.accepted;
-    final color = isAccepted ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    final color =
+        isAccepted ? decor.success : Theme.of(context).colorScheme.error;
     final icon = isAccepted ? Icons.check_circle : Icons.cancel;
     final msg = isAccepted
         ? 'Congratulations! Your application was accepted.'
@@ -354,8 +333,8 @@ class _StatusProgressBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Row(
         children: [
@@ -367,47 +346,6 @@ class _StatusProgressBar extends StatelessWidget {
                     color: color, fontSize: 12, fontWeight: FontWeight.w500)),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ── Empty state ───────────────────────────────────────────────────────────────
-
-class _EmptyState extends StatelessWidget {
-  final bool filtered;
-  const _EmptyState({required this.filtered});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.inbox_outlined,
-                size: 60, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(
-              filtered
-                  ? 'No applications with this status'
-                  : 'No applications yet',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              filtered
-                  ? 'Try selecting a different filter.'
-                  : 'Browse the Job Board and apply to positions that match your profile.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-            ),
-          ],
-        ),
       ),
     );
   }

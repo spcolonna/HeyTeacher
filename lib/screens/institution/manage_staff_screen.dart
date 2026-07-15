@@ -4,6 +4,7 @@ import '../../models/institution_staff.dart';
 import '../../models/teacher_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/staff_service.dart';
+import '../../widgets/widgets.dart';
 
 const _kDismissalReasons = [
   'End of contract',
@@ -34,16 +35,13 @@ class ManageStaffScreen extends StatelessWidget {
         stream: service.getStaffForInstitution(user.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonList();
           }
           if (snapshot.hasError) {
-            print('🔥 ManageStaff stream error: ${snapshot.error}');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text('Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red, fontSize: 13)),
-              ),
+            return const EmptyState(
+              icon: Icons.cloud_off_outlined,
+              title: 'Could not load your staff',
+              message: 'Please check your connection and try again.',
             );
           }
           final all = snapshot.data ?? [];
@@ -58,15 +56,16 @@ class ManageStaffScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.group_outlined,
-                      size: 72, color: Colors.grey.shade300),
+                      size: 72,
+                      color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
                   Text('No staff yet',
                       style: TextStyle(
-                          fontSize: 16, color: Colors.grey.shade500)),
+                          fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   Text('Tap "Add Teacher" to invite a teacher',
                       style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade400)),
+                          fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             );
@@ -76,7 +75,7 @@ class ManageStaffScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             children: [
               if (pending.isNotEmpty) ...[
-                _sectionHeader('Pending Requests', pending.length),
+                _sectionHeader(context, 'Pending Requests', pending.length),
                 ...pending.map((s) => _PendingCard(
                       staff: s,
                       onCancel: () => service.cancelRequest(s.id),
@@ -84,7 +83,7 @@ class ManageStaffScreen extends StatelessWidget {
                 const SizedBox(height: 16),
               ],
               if (active.isNotEmpty) ...[
-                _sectionHeader('Active Staff', active.length),
+                _sectionHeader(context, 'Active Staff', active.length),
                 ...active.map((s) => _ActiveCard(
                       staff: s,
                       onEditLevels: () =>
@@ -100,7 +99,7 @@ class ManageStaffScreen extends StatelessWidget {
     );
   }
 
-  Widget _sectionHeader(String title, int count) {
+  Widget _sectionHeader(BuildContext context, String title, int count) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(children: [
@@ -110,7 +109,7 @@ class ManageStaffScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color: Theme.of(context).colorScheme.outlineVariant,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text('$count',
@@ -183,7 +182,7 @@ class _PendingCard extends StatelessWidget {
               Text(staff.teacherName,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               Text(staff.teacherEmail,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ]),
           ),
           Container(
@@ -242,7 +241,7 @@ class _ActiveCard extends StatelessWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                     Text(staff.teacherEmail,
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600)),
+                            fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ]),
             ),
             IconButton(
@@ -372,14 +371,14 @@ class _AddTeacherSheetState extends State<_AddTeacherSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 20),
         const Text('Add Teacher',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
         Text('Search by the email they used to register',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 20),
         TextField(
           controller: _emailCtrl,
@@ -388,7 +387,6 @@ class _AddTeacherSheetState extends State<_AddTeacherSheet> {
           decoration: InputDecoration(
             labelText: 'Teacher email',
             prefixIcon: const Icon(Icons.email_outlined),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             errorText: _error,
           ),
           onSubmitted: (_) => _send(),
@@ -452,14 +450,14 @@ class _EditLevelsSheetState extends State<_EditLevelsSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2))),
         const SizedBox(height: 20),
         Text('Levels — ${widget.staff.teacherName}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
         const SizedBox(height: 6),
         Text('Select the levels this teacher covers',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 20),
         Wrap(
           spacing: 10,
@@ -533,7 +531,7 @@ class _RemoveDialogState extends State<_RemoveDialog> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(
             'Before removing this teacher, please rate their performance and add any relevant comments.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           const Align(

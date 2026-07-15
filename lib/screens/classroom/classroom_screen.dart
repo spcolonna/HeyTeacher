@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/class_group.dart';
 import '../../services/classroom_service.dart';
+import '../../widgets/widgets.dart';
 import '../../services/google_calendar_service.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
@@ -41,23 +42,26 @@ class ClassroomScreen extends StatelessWidget {
               stream: service.getGroupsForTeacher(user.uid),
               builder: (context, snap) {
                 if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SkeletonList();
                 }
                 if (snap.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text('Error loading groups: ${snap.error}',
-                          textAlign: TextAlign.center),
-                    ),
+                  return const EmptyState(
+                    icon: Icons.cloud_off_outlined,
+                    title: 'Could not load your groups',
+                    message: 'Please check your connection and try again.',
                   );
                 }
 
                 final groups = snap.data ?? [];
 
                 if (groups.isEmpty) {
-                  return _EmptyState(
-                    onCreateGroup: () => Navigator.push(
+                  return EmptyState(
+                    icon: Icons.school_outlined,
+                    title: 'No groups yet',
+                    message:
+                        'Create your first group to manage students and schedule Google Meet sessions.',
+                    ctaLabel: 'Create Group',
+                    onCta: () => Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) =>
@@ -182,50 +186,6 @@ class _GoogleAccountBannerState extends State<_GoogleAccountBanner> {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  final VoidCallback onCreateGroup;
-  const _EmptyState({required this.onCreateGroup});
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.school_outlined, size: 64, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(
-              'No groups yet',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create your first group to manage students and schedule Google Meet sessions.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onCreateGroup,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Group'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _GroupCard extends StatelessWidget {
   final ClassGroup group;
@@ -305,14 +265,14 @@ class _GroupCard extends StatelessWidget {
                     Text(
                       '${group.students.length} student${group.students.length == 1 ? '' : 's'}',
                       style: TextStyle(
-                          color: Colors.grey.shade500, fontSize: 13),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
                     ),
                     if (group.description != null) ...[
                       const SizedBox(height: 2),
                       Text(
                         group.description!,
                         style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

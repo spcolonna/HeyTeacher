@@ -186,7 +186,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'No students yet. Tap "Add" to add one.',
-                  style: TextStyle(color: Colors.grey.shade500),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ...List.generate(_studentEntries.length, (i) {

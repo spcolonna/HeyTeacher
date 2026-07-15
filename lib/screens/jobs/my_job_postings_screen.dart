@@ -1,19 +1,30 @@
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/job_posting.dart';
 import '../../services/job_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import 'applicants_screen.dart';
 import 'create_job_screen.dart';
 
-class MyJobPostingsScreen extends StatelessWidget {
+class MyJobPostingsScreen extends StatefulWidget {
   const MyJobPostingsScreen({super.key});
+
+  @override
+  State<MyJobPostingsScreen> createState() => _MyJobPostingsScreenState();
+}
+
+class _MyJobPostingsScreenState extends State<MyJobPostingsScreen> {
+  final JobService _jobService = JobService();
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthProvider>(context).currentUser;
-    final JobService jobService = JobService();
 
     return Scaffold(
       appBar: AppBar(
@@ -31,72 +42,69 @@ class MyJobPostingsScreen extends StatelessWidget {
         ],
       ),
       body: StreamBuilder<List<JobPosting>>(
-        stream: jobService.getJobsByInstitution(user!.uid),
+        stream: _jobService.getJobsByInstitution(user!.uid),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const SkeletonList();
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return ErrorState(onRetry: () => setState(() {}));
           }
 
           final jobs = snapshot.data ?? [];
 
           if (jobs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.work_off, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No job postings yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const CreateJobScreen()),
-                      );
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Post your first job'),
-                  ),
-                ],
-              ),
+            return EmptyState(
+              icon: Icons.work_outline,
+              title: 'No job postings yet',
+              message: 'Post your first job to reach qualified teachers.',
+              ctaLabel: 'Post your first job',
+              onCta: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateJobScreen()),
+                );
+              },
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: jobs.length,
-            itemBuilder: (context, index) {
-              final job = jobs[index];
-              return _JobPostingCard(
-                job: job,
-                onViewApplicants: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ApplicantsScreen(job: job),
-                    ),
-                  );
-                },
-                onToggleStatus: () async {
-                  final newStatus = job.status == JobStatus.active
-                      ? JobStatus.closed
-                      : JobStatus.active;
-                  await jobService.updateJobStatus(job.id, newStatus);
-                },
-                onDelete: () {
-                  _showDeleteDialog(context, job, jobService);
-                },
-              );
+          return RefreshIndicator.adaptive(
+            onRefresh: () async {
+              setState(() {});
+              await Future.delayed(const Duration(milliseconds: 600));
             },
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(Spacing.lg),
+              itemCount: jobs.length,
+              itemBuilder: (context, index) {
+                final job = jobs[index];
+                return _JobPostingCard(
+                  job: job,
+                  onViewApplicants: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ApplicantsScreen(job: job),
+                      ),
+                    );
+                  },
+                  onToggleStatus: () async {
+                    final newStatus = job.status == JobStatus.active
+                        ? JobStatus.closed
+                        : JobStatus.active;
+                    await _jobService.updateJobStatus(job.id, newStatus);
+                  },
+                  onDelete: () {
+                    _showDeleteDialog(context, job, _jobService);
+                  },
+                )
+                    .animate(delay: (40 * min(index, 10)).ms)
+                    .fadeIn(duration: Motion.base, curve: Motion.curve)
+                    .slideY(begin: 0.06, curve: Motion.curve);
+              },
+            ),
           );
         },
       ),
@@ -115,13 +123,16 @@ class MyJobPostingsScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
             onPressed: () async {
               await jobService.deleteJob(job.id);
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -145,95 +156,84 @@ class _JobPostingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = job.status == JobStatus.active;
+    final scheme = Theme.of(context).colorScheme;
+    final decor = Theme.of(context).extension<AppDecor>()!;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    job.jobTitle,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  job.jobTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              StatusChip(
+                label: isActive ? 'Active' : 'Closed',
+                kind: isActive ? StatusKind.success : StatusKind.neutral,
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.xs + 2),
+          Row(
+            children: [
+              Icon(Icons.location_on_outlined,
+                  size: 14, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Text(
+                job.location,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(width: Spacing.lg),
+              Icon(Icons.calendar_today_outlined,
+                  size: 14, color: scheme.onSurfaceVariant),
+              const SizedBox(width: Spacing.xs),
+              Text(
+                DateFormat('MMM dd, yyyy').format(job.postedAt),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onViewApplicants,
+                  icon: const Icon(Icons.people_outline, size: 16),
+                  label: Text(
+                    '${job.applicationsCount} Applicant${job.applicationsCount != 1 ? 's' : ''}',
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color:
-                        isActive ? Colors.green.shade100 : Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    isActive ? 'Active' : 'Closed',
-                    style: TextStyle(
-                      color: isActive
-                          ? Colors.green.shade700
-                          : Colors.grey.shade600,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              ),
+              const SizedBox(width: Spacing.sm),
+              IconButton(
+                icon: Icon(
+                  isActive
+                      ? Icons.pause_circle_outline
+                      : Icons.play_circle_outline,
+                  color: isActive ? decor.warning : decor.success,
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text(
-                  job.location,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-                const SizedBox(width: 16),
-                Icon(Icons.calendar_today,
-                    size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Text(
-                  DateFormat('MMM dd, yyyy').format(job.postedAt),
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onViewApplicants,
-                    icon: const Icon(Icons.people, size: 16),
-                    label: Text(
-                      '${job.applicationsCount} Applicant${job.applicationsCount != 1 ? 's' : ''}',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(
-                    isActive ? Icons.pause_circle : Icons.play_circle,
-                    color: isActive ? Colors.orange : Colors.green,
-                  ),
-                  tooltip: isActive ? 'Close job' : 'Reopen job',
-                  onPressed: onToggleStatus,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  tooltip: 'Delete job',
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
-          ],
-        ),
+                tooltip: isActive ? 'Close job' : 'Reopen job',
+                onPressed: onToggleStatus,
+              ),
+              IconButton(
+                icon: Icon(Icons.delete_outline, color: scheme.error),
+                tooltip: 'Delete job',
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

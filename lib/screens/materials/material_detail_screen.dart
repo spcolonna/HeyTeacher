@@ -83,23 +83,17 @@ class MaterialDetailScreen extends StatelessWidget {
     if (material.fileUrl == null) return false;
     String url = material.fileUrl!.toLowerCase();
 
-    // Debug
-    print('Checking if image: $url');
     bool isImage = url.contains('.jpg') ||
         url.contains('.jpeg') ||
         url.contains('.png') ||
         url.contains('.gif') ||
         url.contains('.webp');
-    print('Is image: $isImage');
 
     return isImage;
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Material fileUrl: ${material.fileUrl}');
-    print('Is image file: ${_isImageFile()}');
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Material Details'),
@@ -111,152 +105,165 @@ class MaterialDetailScreen extends StatelessWidget {
             // Header con preview de imagen si es imagen
             if (_isImageFile() && material.fileUrl != null)
               // Preview de imagen
-              Container(
-                height: 300,
-                width: double.infinity,
-                color: Colors.grey.shade200,
-                child: Stack(
-                  children: [
-                    Image.network(
-                      material.fileUrl!,
-                      fit: BoxFit.contain,
-                      width: double.infinity,
-                      height: 300,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Loading image...',
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        print('Image load error: $error');
-                        print('Stack trace: $stackTrace');
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image,
-                                  size: 48, color: Colors.grey.shade400),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Could not load image',
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                              const SizedBox(height: 4),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Text(
-                                  error.toString(),
-                                  style: TextStyle(
-                                      color: Colors.red.shade400, fontSize: 10),
-                                  textAlign: TextAlign.center,
-                                  maxLines: 3,
+              Hero(
+                tag: 'material-${material.id}',
+                child: Container(
+                  height: 300,
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  child: Stack(
+                    children: [
+                      Image.network(
+                        material.fileUrl!,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                        height: 300,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
                                 ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Loading image...',
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.broken_image,
+                                    size: 48, color: Colors.grey.shade400),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Could not load image',
+                                  style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant),
+                                ),
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  child: Text(
+                                    error.toString(),
+                                    style: TextStyle(
+                                        color: Colors.red.shade400,
+                                        fontSize: 10),
+                                    textAlign: TextAlign.center,
+                                    maxLines: 3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                      // Overlay para mostrar que es una imagen
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.image, color: Colors.white, size: 14),
+                              SizedBox(width: 4),
+                              Text(
+                                'Image Preview',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 11),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                    // Overlay para mostrar que es una imagen
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.image, color: Colors.white, size: 14),
-                            SizedBox(width: 4),
-                            Text(
-                              'Image Preview',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 11),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               )
             else
               // Header con gradiente (para PDFs y otros archivos)
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      _getCategoryColor(material.category),
-                      _getCategoryColor(material.category).withOpacity(0.8),
-                    ],
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        _getCategoryLabel(material.category),
-                        style: TextStyle(
-                          color: _getCategoryColor(material.category),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      material.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.person,
-                            color: Colors.white70, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          material.uploaderName,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 14),
-                        ),
+              Hero(
+                tag: 'material-${material.id}',
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        _getCategoryColor(material.category),
+                        _getCategoryColor(material.category)
+                            .withValues(alpha: 0.8),
                       ],
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          _getCategoryLabel(material.category),
+                          style: TextStyle(
+                            color: _getCategoryColor(material.category),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        material.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.person,
+                              color: Colors.white70, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            material.uploaderName,
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -272,7 +279,7 @@ class MaterialDetailScreen extends StatelessWidget {
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: _getCategoryColor(material.category)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -301,7 +308,10 @@ class MaterialDetailScreen extends StatelessWidget {
                         Text(
                           material.uploaderName,
                           style: TextStyle(
-                              color: Colors.grey.shade600, fontSize: 14),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                              fontSize: 14),
                         ),
                       ],
                     ),
@@ -364,7 +374,9 @@ class MaterialDetailScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${material.downloadCount} downloads',
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(width: 16),
                       Icon(Icons.calendar_today,
@@ -372,7 +384,9 @@ class MaterialDetailScreen extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         DateFormat('MMM dd, yyyy').format(material.uploadedAt),
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),

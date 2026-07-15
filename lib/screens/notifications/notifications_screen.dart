@@ -50,11 +50,11 @@ class NotificationsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text('No notifications yet',
                       style: TextStyle(
-                          fontSize: 16, color: Colors.grey.shade500)),
+                          fontSize: 16, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 6),
                   Text('We\'ll let you know when something happens',
                       style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade400)),
+                          fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ],
               ),
             );
@@ -212,7 +212,7 @@ class _NotificationTile extends StatelessWidget {
                       Text(
                         _relativeTime(data['createdAt']),
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade500),
+                            fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -220,7 +220,7 @@ class _NotificationTile extends StatelessWidget {
                   Text(
                     data['body'] ?? '',
                     style: TextStyle(
-                        fontSize: 13, color: Colors.grey.shade600),
+                        fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

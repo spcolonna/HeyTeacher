@@ -289,7 +289,7 @@ class _ManageDocumentsScreenState extends State<ManageDocumentsScreen> {
           const SizedBox(height: 4),
           Text(
             'Upload your CV so institutions can review your full background.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 12),
 
@@ -345,7 +345,7 @@ class _ManageDocumentsScreenState extends State<ManageDocumentsScreen> {
           const SizedBox(height: 4),
           Text(
             'Upload your teaching certificates (TESOL, Cambridge, etc.). PDF, JPG or PNG.',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 12),
 
@@ -416,7 +416,7 @@ class _DocumentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2)),
         ],
@@ -441,7 +441,7 @@ class _DocumentCard extends StatelessWidget {
                 children: [
                   Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
                 ],
               ),
             ),
@@ -471,15 +471,15 @@ class _EmptyDocHint extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.grey.shade400, size: 18),
+          Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onSurfaceVariant, size: 18),
           const SizedBox(width: 10),
-          Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
         ],
       ),
     );

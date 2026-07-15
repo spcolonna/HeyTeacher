@@ -174,22 +174,14 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
           children: [
             TextFormField(
               controller: _titleController,
-              decoration: InputDecoration(
-                labelText: 'Title *',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Title *'),
               validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _descriptionController,
               maxLines: 3,
-              decoration: InputDecoration(
-                labelText: 'Description *',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Description *'),
               validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 24),
@@ -233,12 +225,7 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
             const SizedBox(height: 24),
             TextFormField(
               controller: _tagsController,
-              decoration: InputDecoration(
-                labelText: 'Tags (comma separated)',
-                hintText: 'e.g., grammar, vocabulary, games',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              decoration: const InputDecoration(labelText: 'Tags (comma separated)', hintText: 'e.g., grammar, vocabulary, games'),
             ),
             const SizedBox(height: 24),
             const Text('File *', style: TextStyle(fontWeight: FontWeight.bold)),

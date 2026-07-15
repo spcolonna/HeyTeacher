@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
 import 'services/notification_service.dart';
 import 'firebase_options.dart';
+import 'theme/theme.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 void main() async {
@@ -36,37 +37,11 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'HeyTeacher!',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            secondary: Colors.purple,
-          ),
-          appBarTheme: const AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              elevation: 2,
-              textStyle: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          cardTheme: CardThemeData(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-        home: const SplashScreen(), // ← CAMBIO AQUÍ
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.system,
+        home: const SplashScreen(),
       ),
     );
   }
 }
-
-// ← ELIMINAMOS AuthWrapper porque SplashScreen ya maneja la navegación

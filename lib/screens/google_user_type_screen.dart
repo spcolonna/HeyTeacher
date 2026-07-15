@@ -83,7 +83,8 @@ class _GoogleUserTypeScreenState extends State<GoogleUserTypeScreen> {
               Text(
                 'How will you use HeyTeacher?',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 40),
               _TypeCard(
@@ -157,7 +158,8 @@ class _TypeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final scheme = Theme.of(context).colorScheme;
+    final primary = scheme.primary;
 
     return GestureDetector(
       onTap: onTap,
@@ -165,10 +167,12 @@ class _TypeCard extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: selected ? primary.withValues(alpha: 0.07) : Colors.white,
+          color: selected
+              ? primary.withValues(alpha: 0.07)
+              : scheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? primary : Colors.grey.shade200,
+            color: selected ? primary : scheme.outlineVariant,
             width: selected ? 2 : 1,
           ),
           boxShadow: selected
@@ -178,12 +182,7 @@ class _TypeCard extends StatelessWidget {
                       blurRadius: 12,
                       offset: const Offset(0, 4))
                 ]
-              : [
-                  BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2))
-                ],
+              : null,
         ),
         child: Row(
           children: [
@@ -193,11 +192,12 @@ class _TypeCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: selected
                     ? primary.withValues(alpha: 0.15)
-                    : Colors.grey.shade100,
+                    : scheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon,
-                  size: 26, color: selected ? primary : Colors.grey.shade500),
+                  size: 26,
+                  color: selected ? primary : scheme.onSurfaceVariant),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -205,14 +205,14 @@ class _TypeCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: selected ? primary : Colors.black87)),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: selected ? primary : scheme.onSurface)),
                   const SizedBox(height: 3),
                   Text(subtitle,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant)),
                 ],
               ),
             ),
@@ -220,7 +220,7 @@ class _TypeCard extends StatelessWidget {
               Icon(Icons.check_circle, color: primary, size: 22)
             else
               Icon(Icons.radio_button_unchecked,
-                  color: Colors.grey.shade300, size: 22),
+                  color: scheme.outlineVariant, size: 22),
           ],
         ),
       ),

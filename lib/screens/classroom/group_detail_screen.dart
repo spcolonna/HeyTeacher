@@ -98,7 +98,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           if (group.description != null) ...[
             Text(
               group.description!,
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
           ],
@@ -166,7 +166,7 @@ class _SectionHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -189,7 +189,7 @@ class _EmptyHint extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Text(text,
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
     );
   }
 }
@@ -366,12 +366,12 @@ class _MeetingCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text('Past',
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600)),
+                            fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ),
               ],
             ),
@@ -379,12 +379,12 @@ class _MeetingCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.calendar_today_outlined,
-                    size: 13, color: Colors.grey.shade500),
+                    size: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   DateFormat('EEE MMM d · HH:mm').format(meeting.scheduledAt),
                   style: TextStyle(
-                      fontSize: 12, color: Colors.grey.shade600),
+                      fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -463,17 +463,17 @@ class _ActionChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: Colors.grey.shade700),
+            Icon(icon, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(label,
                 style: TextStyle(
-                    fontSize: 12, color: Colors.grey.shade700)),
+                    fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ],
         ),
       ),
@@ -512,7 +512,7 @@ class _ShareSheet extends StatelessWidget {
                   ?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text('Select a student or share to all',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
           const SizedBox(height: 16),
           // Share to all buttons
           Row(
@@ -547,7 +547,7 @@ class _ShareSheet extends StatelessWidget {
             const SizedBox(height: 8),
             Text('Or pick a student:',
                 style: TextStyle(
-                    fontSize: 13, color: Colors.grey.shade600)),
+                    fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 240),

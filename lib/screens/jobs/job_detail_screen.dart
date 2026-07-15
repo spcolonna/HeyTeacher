@@ -6,6 +6,8 @@ import '../../providers/auth_provider.dart';
 import '../../models/app_user.dart';
 import '../../models/job_posting.dart';
 import '../../services/job_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import '../login_screen.dart';
 
 class JobDetailScreen extends StatefulWidget {
@@ -55,22 +57,17 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Application submitted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      showAppSnack(context, 'Application submitted successfully!',
+          type: AppSnackType.success);
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().contains('Already applied')
-              ? 'You have already applied to this job'
-              : 'Failed to submit application'),
-          backgroundColor: Colors.red,
-        ),
+      showAppSnack(
+        context,
+        e.toString().contains('Already applied')
+            ? 'You have already applied to this job'
+            : 'Failed to submit application',
+        type: AppSnackType.error,
       );
     } finally {
       if (mounted) setState(() => _isApplying = false);
@@ -90,35 +87,28 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade400, Colors.purple.shade400],
-                ),
-              ),
+            GradientHeader(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.job.jobTitle,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(color: Colors.white),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.sm),
                   Text(
                     widget.job.institutionName,
                     style: const TextStyle(fontSize: 18, color: Colors.white70),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: Spacing.lg),
                   Row(
                     children: [
                       const Icon(Icons.location_on,
                           color: Colors.white, size: 20),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: Spacing.xs),
                       Text(
                         widget.job.location,
                         style: const TextStyle(color: Colors.white),
@@ -237,8 +227,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: Spacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,8 +238,8 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             child: Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ),

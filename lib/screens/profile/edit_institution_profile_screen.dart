@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -364,7 +363,6 @@ class _EditInstitutionProfileScreenState
       hintText: hint,
       prefixIcon: Icon(icon, size: 20),
       suffixIcon: suffix,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
     );

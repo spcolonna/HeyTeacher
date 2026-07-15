@@ -6,6 +6,8 @@ import '../../models/institution_staff.dart';
 import '../../services/job_service.dart';
 import '../../services/staff_service.dart';
 import '../../services/firestore_wrapper.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 import '../profile/document_preview_screen.dart';
 
 class TeacherProfileDetailScreen extends StatefulWidget {
@@ -221,10 +223,10 @@ class _TeacherProfileDetailScreenState
                     const SizedBox(height: 16),
                     _buildInfoCard(
                       child: Row(children: [
-                        Icon(Icons.info_outline, color: Colors.grey.shade500),
+                        Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: 12),
                         Expanded(child: Text("This teacher hasn't completed their profile yet.",
-                            style: TextStyle(color: Colors.grey.shade600))),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant))),
                       ]),
                     ),
                   ],
@@ -275,11 +277,7 @@ class _TeacherProfileDetailScreenState
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade500, Colors.purple.shade500],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: Theme.of(context).extension<AppDecor>()!.primaryGradient,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -290,20 +288,10 @@ class _TeacherProfileDetailScreenState
               border: Border.all(color: Colors.white, width: 2.5),
               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 3))],
             ),
-            child: CircleAvatar(
+            child: AppAvatar(
+              url: photoUrl,
+              name: app.teacherName,
               radius: 36,
-              backgroundColor: Colors.white,
-              child: photoUrl != null
-                  ? ClipOval(
-                      child: Image.network(
-                        photoUrl,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _avatarLetter(),
-                      ),
-                    )
-                  : _avatarLetter(),
             ),
           ),
           const SizedBox(width: 14),
@@ -375,7 +363,7 @@ class _TeacherProfileDetailScreenState
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(widget.application.jobTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(widget.application.institutionName, style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+              Text(widget.application.institutionName, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13)),
             ]),
           ),
         ],
@@ -385,7 +373,7 @@ class _TeacherProfileDetailScreenState
 
   Widget _buildCertChips() {
     if (_profile!.certifications.isEmpty) {
-      return Text('No certifications listed', style: TextStyle(color: Colors.grey.shade500, fontSize: 13));
+      return Text('No certifications listed', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13));
     }
 
     Color certColor(CertificationType c) {
@@ -442,7 +430,7 @@ class _TeacherProfileDetailScreenState
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_profile!.availability.isNotEmpty) ...[
-          Text('Availability', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text('Availability', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -456,7 +444,7 @@ class _TeacherProfileDetailScreenState
           const SizedBox(height: 12),
         ],
         if (_profile!.preferredLevels.isNotEmpty) ...[
-          Text('Teaching Levels', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text('Teaching Levels', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -503,7 +491,7 @@ class _TeacherProfileDetailScreenState
                         child: Container(
                           width: 2,
                           margin: const EdgeInsets.symmetric(vertical: 2),
-                          color: Colors.grey.shade200,
+                          color: Theme.of(context).colorScheme.outlineVariant,
                         ),
                       ),
                   ],
@@ -527,7 +515,7 @@ class _TeacherProfileDetailScreenState
                                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 2),
                                 Text(exp.institutionName,
-                                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700)),
+                                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                               ],
                             ),
                           ),
@@ -545,19 +533,19 @@ class _TeacherProfileDetailScreenState
                       ),
                       const SizedBox(height: 3),
                       Row(children: [
-                        Icon(Icons.calendar_today_outlined, size: 11, color: Colors.grey.shade500),
+                        Icon(Icons.calendar_today_outlined, size: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(exp.dateRange,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         if (exp.duration.isNotEmpty) ...[
-                          Text(' · ', style: TextStyle(color: Colors.grey.shade400)),
-                          Text(exp.duration, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                          Text(' · ', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          Text(exp.duration, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         ],
                       ]),
                       if (exp.description?.isNotEmpty == true) ...[
                         const SizedBox(height: 5),
                         Text(exp.description!,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.4)),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4)),
                       ],
                     ],
                   ),
@@ -637,11 +625,11 @@ class _TeacherProfileDetailScreenState
       title: 'Clearing',
       child: _clearing.isEmpty
           ? Row(children: [
-              Icon(Icons.info_outline, size: 16, color: Colors.grey.shade400),
+              Icon(Icons.info_outline, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
                 'No employment history yet',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ])
           : Column(
@@ -666,7 +654,7 @@ class _TeacherProfileDetailScreenState
                       ),
                       Text(
                         '${_clearing.length} evaluation${_clearing.length == 1 ? '' : 's'} from past employers',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ]),
                     const Spacer(),
@@ -706,9 +694,9 @@ class _TeacherProfileDetailScreenState
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,7 +712,7 @@ class _TeacherProfileDetailScreenState
                     const SizedBox(height: 2),
                     Text(
                       _formatClearingDate(date),
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ]),
@@ -758,10 +746,10 @@ class _TeacherProfileDetailScreenState
           if (entry.removalReason?.isNotEmpty == true) ...[
             const SizedBox(height: 6),
             Row(children: [
-              Icon(Icons.label_outline, size: 12, color: Colors.grey.shade500),
+              Icon(Icons.label_outline, size: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Text(entry.removalReason!,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+                  style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500)),
             ]),
           ],
           // Comment
@@ -772,16 +760,16 @@ class _TeacherProfileDetailScreenState
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.format_quote, size: 14, color: Colors.grey.shade400),
+                  Icon(Icons.format_quote, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(entry.removalComment!,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontStyle: FontStyle.italic, height: 1.4)),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant, fontStyle: FontStyle.italic, height: 1.4)),
                   ),
                 ],
               ),
@@ -822,21 +810,13 @@ class _TeacherProfileDetailScreenState
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: child,
     );
   }
 
-  Widget _avatarLetter() {
-    return Text(
-      widget.application.teacherName.isNotEmpty
-          ? widget.application.teacherName[0].toUpperCase()
-          : 'T',
-      style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.blue.shade700),
-    );
-  }
 }
 
 class _DocumentRow extends StatelessWidget {
