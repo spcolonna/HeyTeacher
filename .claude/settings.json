@@ -6,7 +6,18 @@
       "Bash(dart format *)",
       "Bash(grep -rn \"color: Colors.white,$\" lib/screens --include=\"*.dart\")",
       "Bash(awk -F: '{s+=$2} END {print s}')",
-      "Bash(awk -F: '$2>0 {s+=$2} END {print s\" TextStyle inline restantes\"}')"
+      "Bash(awk -F: '$2>0 {s+=$2} END {print s\" TextStyle inline restantes\"}')",
+      "Bash(npm --version)",
+      "Bash(firebase login:list)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} | %{size_download} bytes\\\\n\" http://localhost:4173/)",
+      "Bash(curl -s http://localhost:4173/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:4173/admin)",
+      "Bash(kill %1)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} | %{time_total}s\\\\n\" https://heyteacher-3021b.web.app/)",
+      "Bash(curl -s https://heyteacher-3021b.web.app/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" https://heyteacher-3021b.web.app/admin)",
+      "Bash(curl -s -o /dev/null -w \"logo.jpeg → HTTP %{http_code} | %{size_download} bytes\\\\n\" https://heyteacher-3021b.web.app/logo.jpeg)"
     ]
   }
 }

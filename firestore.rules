@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Backoffice access. This runs on Google's servers, so it cannot be
+    // bypassed from the browser — the /admin UI check is only cosmetic.
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'spcolonna@gmail.com';
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getUserData().userType == 'teacher';
+    }
+
+    function isInstitution() {
+      return isSignedIn() && getUserData().userType == 'institution';
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+
+    match /teacher_profiles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    match /institution_profiles/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    match /jobs/{jobId} {
+      // Guests can browse jobs without an account (App Store guideline 5.1.1).
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && (
+        isOwner(resource.data.postedBy) ||
+        (isTeacher() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['applicationsCount']))
+      ));
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.postedBy));
+    }
+
+    match /applications/{applicationId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.teacherId));
+    }
+
+    match /materials/{materialId} {
+      // Guests can browse materials without an account (App Store guideline 5.1.1).
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && (
+        isOwner(resource.data.uploadedBy) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloadCount'])
+      ));
+      // Admin moderation: remove inappropriate content.
+      allow delete: if isAdmin() || (isSignedIn() && isOwner(resource.data.uploadedBy));
+    }
+
+    // Institution Staff
+    match /institution_staff/{docId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isInstitution() &&
+        request.auth.uid == request.resource.data.institutionId;
+      allow update: if isSignedIn() && (
+        request.auth.uid == resource.data.institutionId ||
+        request.auth.uid == resource.data.teacherId
+      );
+      allow delete: if isAdmin() || (isSignedIn() &&
+        request.auth.uid == resource.data.institutionId);
+    }
+
+    match /users/{userId}/notifications/{notificationId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    match /benefits/{benefitId} {
+      allow read: if isSignedIn();
+      // Only the backoffice can create/edit sponsor deals.
+      allow write: if isAdmin();
+    }
+
+    match /classGroups/{groupId} {
+      allow read: if isSignedIn() && isOwner(resource.data.teacherId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.teacherId);
+      allow update: if isSignedIn() && isOwner(resource.data.teacherId);
+      allow delete: if isSignedIn() && isOwner(resource.data.teacherId);
+    }
+
+    match /classMeetings/{meetingId} {
+      allow read: if isSignedIn() && isOwner(resource.data.teacherId);
+      allow create: if isSignedIn() && isOwner(request.resource.data.teacherId);
+      allow update: if isSignedIn() && isOwner(resource.data.teacherId);
+      allow delete: if isSignedIn() && isOwner(resource.data.teacherId);
+    }
+
+  }
+}
