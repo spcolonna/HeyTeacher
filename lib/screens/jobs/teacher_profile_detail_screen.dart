@@ -208,7 +208,7 @@ class _TeacherProfileDetailScreenState
                           children: _profile!.teachingMethodologies
                               .map((m) => Chip(
                                     label: Text(m, style: const TextStyle(fontSize: 12)),
-                                    backgroundColor: Colors.teal.shade50,
+                                    backgroundColor: Theme.of(context).colorScheme.secondary.softFill,
                                     side: BorderSide(color: Colors.teal.shade200),
                                   ))
                               .toList(),
@@ -437,8 +437,8 @@ class _TeacherProfileDetailScreenState
             runSpacing: 6,
             children: _profile!.availability.map((s) => Chip(
                   label: Text(shiftLabels[s]!, style: const TextStyle(fontSize: 12)),
-                  backgroundColor: Colors.green.shade50,
-                  side: BorderSide(color: Colors.green.shade200),
+                  backgroundColor: Theme.of(context).extension<AppDecor>()!.success.softFill,
+                  side: BorderSide(color: Theme.of(context).extension<AppDecor>()!.success.softBorder),
                 )).toList(),
           ),
           const SizedBox(height: 12),
@@ -451,8 +451,8 @@ class _TeacherProfileDetailScreenState
             runSpacing: 6,
             children: _profile!.preferredLevels.map((l) => Chip(
                   label: Text(levelLabels[l]!, style: const TextStyle(fontSize: 12)),
-                  backgroundColor: Colors.purple.shade50,
-                  side: BorderSide(color: Colors.purple.shade200),
+                  backgroundColor: Theme.of(context).colorScheme.secondary.softFill,
+                  side: BorderSide(color: Theme.of(context).colorScheme.secondary.softBorder),
                 )).toList(),
           ),
         ],
@@ -483,7 +483,7 @@ class _TeacherProfileDetailScreenState
                         shape: BoxShape.circle,
                         color: exp.isCurrent
                             ? Theme.of(context).colorScheme.primary
-                            : Colors.grey.shade400,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     if (!isLast)
@@ -639,7 +639,7 @@ class _TeacherProfileDetailScreenState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade50,
+                    color: Theme.of(context).extension<AppDecor>()!.warning.softFill,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.amber.shade200),
                   ),
@@ -678,7 +678,7 @@ class _TeacherProfileDetailScreenState
                   Icon(Icons.verified, size: 13, color: Colors.teal.shade600),
                   const SizedBox(width: 4),
                   Text('Verified by HeyTeacher',
-                      style: TextStyle(fontSize: 11, color: Colors.teal.shade700, fontWeight: FontWeight.w500)),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w500)),
                 ]),
               ],
             ),

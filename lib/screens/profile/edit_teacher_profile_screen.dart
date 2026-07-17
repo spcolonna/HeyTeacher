@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/firestore_wrapper.dart';
 import '../../services/storage_service.dart';
 import 'manage_documents_screen.dart';
+import '../../theme/theme.dart';
 
 const _kMethodologies = [
   'Communicative',
@@ -636,7 +637,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
           child: LinearProgressIndicator(
             value: _completeness,
             minHeight: 6,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
             valueColor: AlwaysStoppedAnimation<Color>(
               _completeness < 0.5 ? Colors.orange : _completeness < 0.8 ? Colors.amber : Colors.green,
             ),
@@ -651,7 +652,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -780,7 +781,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 4),
-        Text('$len / 500', style: TextStyle(fontSize: 11, color: len > 450 ? Colors.orange : Colors.grey.shade500)),
+        Text('$len / 500', style: TextStyle(fontSize: 11, color: len > 450 ? Theme.of(context).extension<AppDecor>()!.warning : Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -1009,7 +1010,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         if (_selectedShifts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Select at least one shift', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+            child: Text('Select at least one shift', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
           ),
       ],
     );
@@ -1046,7 +1047,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         if (_selectedLevels.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text('Select at least one level', style: TextStyle(color: Colors.red.shade700, fontSize: 12)),
+            child: Text('Select at least one level', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
           ),
       ],
     );

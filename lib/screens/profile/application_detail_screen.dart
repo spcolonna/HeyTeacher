@@ -185,9 +185,10 @@ class _CompetitionCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue.shade50,
+            color: Theme.of(context).extension<AppDecor>()!.info.softFill,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.blue.shade100),
+            border: Border.all(
+                color: Theme.of(context).extension<AppDecor>()!.info.softBorder),
           ),
           child: Row(
             children: [
@@ -195,11 +196,12 @@ class _CompetitionCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color: Theme.of(context).extension<AppDecor>()!.info.softFill,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(Icons.people_outline,
-                    color: Colors.blue.shade700, size: 22),
+                    color: Theme.of(context).extension<AppDecor>()!.info,
+                    size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -210,7 +212,7 @@ class _CompetitionCard extends StatelessWidget {
                       '$count ${count == 1 ? 'person has' : 'people have'} applied for this position',
                       style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade800,
+                          color: Theme.of(context).extension<AppDecor>()!.info,
                           fontSize: 14),
                     ),
                     const SizedBox(height: 2),
@@ -219,8 +221,10 @@ class _CompetitionCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 12,
                           color: isActive
-                              ? Colors.green.shade600
-                              : Colors.grey.shade500),
+                              ? Theme.of(context).extension<AppDecor>()!.success
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -262,12 +266,12 @@ class _TimelineSection extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: step.active
                           ? step.color
-                          : Colors.grey.shade200,
+                          : Theme.of(context).colorScheme.surfaceContainerHigh,
                     ),
                     child: Icon(
                       step.icon,
                       size: 15,
-                      color: step.active ? Colors.white : Colors.grey.shade400,
+                      color: step.active ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (!isLast)
@@ -276,7 +280,7 @@ class _TimelineSection extends StatelessWidget {
                       height: 32,
                       color: step.active && i < steps.length - 1
                           ? step.color.withValues(alpha: 0.3)
-                          : Colors.grey.shade200,
+                          : Theme.of(context).colorScheme.surfaceContainerHigh,
                     ),
                 ],
               ),
@@ -295,7 +299,7 @@ class _TimelineSection extends StatelessWidget {
                               : FontWeight.normal,
                           color: step.active
                               ? Colors.black87
-                              : Colors.grey.shade400,
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 14,
                         ),
                       ),
@@ -446,7 +450,7 @@ class _BodyText extends StatelessWidget {
       ),
       child: Text(text,
           style: TextStyle(
-              color: Colors.grey.shade800, fontSize: 14, height: 1.5)),
+              color: Theme.of(context).colorScheme.onSurface, fontSize: 14, height: 1.5)),
     );
   }
 }

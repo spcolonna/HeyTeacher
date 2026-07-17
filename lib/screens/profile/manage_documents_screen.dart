@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/firestore_wrapper.dart';
 import '../../services/storage_service.dart';
 import 'document_preview_screen.dart';
+import '../../theme/theme.dart';
 
 class ManageDocumentsScreen extends StatefulWidget {
   const ManageDocumentsScreen({super.key});
@@ -284,7 +285,7 @@ class _ManageDocumentsScreenState extends State<ManageDocumentsScreen> {
           _buildSectionHeader(
             icon: Icons.picture_as_pdf,
             title: 'Curriculum Vitae',
-            color: Colors.red.shade700,
+            color: Theme.of(context).colorScheme.error,
           ),
           const SizedBox(height: 4),
           Text(
@@ -330,7 +331,7 @@ class _ManageDocumentsScreenState extends State<ManageDocumentsScreen> {
                 child: _buildSectionHeader(
                   icon: Icons.workspace_premium,
                   title: 'Certifications',
-                  color: Colors.amber.shade700,
+                  color: Theme.of(context).extension<AppDecor>()!.warning,
                 ),
               ),
               TextButton.icon(

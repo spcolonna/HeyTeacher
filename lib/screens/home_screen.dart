@@ -280,7 +280,7 @@ class _GuestSignInTab extends StatelessWidget {
               Text(
                 'Sign in to apply for jobs, upload materials, and access your profile.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 28),
               SizedBox(

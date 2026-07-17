@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import '../../providers/auth_provider.dart';
@@ -9,6 +10,7 @@ import '../../models/teaching_material.dart';
 import '../../models/teacher_profile.dart';
 import '../../services/material_service.dart';
 import '../../services/storage_service.dart';
+import '../../theme/theme.dart';
 
 class UploadMaterialScreen extends StatefulWidget {
   final String? institutionId;
@@ -28,6 +30,8 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
   final _formKey = GlobalKey<FormState>();
   final MaterialService _materialService = MaterialService();
   final StorageService _storageService = StorageService();
+
+  final _picker = ImagePicker();
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -50,6 +54,76 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
     _descriptionController.dispose();
     _tagsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final img = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 85,
+      );
+      if (img == null) return;
+
+      // Ensure the filename has a recognizable image extension — the
+      // material detail screen infers "is this an image?" from it.
+      String name = img.name;
+      if (!RegExp(r'\.(jpg|jpeg|png|gif|webp)$', caseSensitive: false)
+          .hasMatch(name)) {
+        name = '$name.jpg';
+      }
+
+      if (kIsWeb) {
+        final bytes = await img.readAsBytes();
+        setState(() {
+          _fileName = name;
+          _selectedFileBytes = bytes;
+          _selectedFile = null;
+        });
+      } else {
+        setState(() {
+          _fileName = name;
+          _selectedFile = File(img.path);
+          _selectedFileBytes = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Error picking image: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _showFileSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Photo Gallery'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImageFromGallery();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_open),
+              title: const Text('Browse Files'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFile();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _pickFile() async {
@@ -231,7 +305,7 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
             const Text('File *', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: _pickFile,
+              onPressed: _showFileSourceSheet,
               icon: const Icon(Icons.attach_file),
               label: Text(_fileName ?? 'Select File'),
               style: OutlinedButton.styleFrom(
@@ -242,7 +316,7 @@ class _UploadMaterialScreenState extends State<UploadMaterialScreen> {
               const SizedBox(height: 8),
               Text(
                 'Selected: $_fileName',
-                style: TextStyle(color: Colors.green.shade700, fontSize: 13),
+                style: TextStyle(color: Theme.of(context).extension<AppDecor>()!.success, fontSize: 13),
               ),
             ],
             const SizedBox(height: 32),

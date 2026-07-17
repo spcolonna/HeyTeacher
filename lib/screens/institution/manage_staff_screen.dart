@@ -5,6 +5,7 @@ import '../../models/teacher_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/staff_service.dart';
 import '../../widgets/widgets.dart';
+import '../../theme/theme.dart';
 
 const _kDismissalReasons = [
   'End of contract',
@@ -170,7 +171,7 @@ class _PendingCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.amber.shade200),
+        side: BorderSide(color: Theme.of(context).extension<AppDecor>()!.warning.softBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -188,13 +189,16 @@ class _PendingCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.amber.shade50,
+              color: Theme.of(context).extension<AppDecor>()!.warning.softFill,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.amber.shade300),
+              border: Border.all(
+                  color: Theme.of(context).extension<AppDecor>()!.warning.softBorder),
             ),
-            child: const Text('Pending',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
-                    color: Colors.orange)),
+            child: Text('Pending',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).extension<AppDecor>()!.warning)),
           ),
           const SizedBox(width: 8),
           IconButton(
@@ -225,7 +229,7 @@ class _ActiveCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -265,8 +269,13 @@ class _ActiveCard extends StatelessWidget {
                   .map((l) => Chip(
                         label: Text(l,
                             style: const TextStyle(fontSize: 11)),
-                        backgroundColor: Colors.purple.shade50,
-                        side: BorderSide(color: Colors.purple.shade200),
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary.softFill,
+                        side: BorderSide(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .secondary
+                                .softBorder),
                         materialTapTargetSize:
                             MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
@@ -281,21 +290,10 @@ class _ActiveCard extends StatelessWidget {
 }
 
 Widget _avatar(InstitutionStaff staff) {
-  return CircleAvatar(
+  return AppAvatar(
+    url: staff.teacherPhotoUrl,
+    name: staff.teacherName,
     radius: 22,
-    backgroundColor: Colors.blue.shade100,
-    backgroundImage: staff.teacherPhotoUrl != null
-        ? NetworkImage(staff.teacherPhotoUrl!)
-        : null,
-    child: staff.teacherPhotoUrl == null
-        ? Text(
-            staff.teacherName.isNotEmpty
-                ? staff.teacherName[0].toUpperCase()
-                : '?',
-            style: TextStyle(
-                color: Colors.blue.shade700, fontWeight: FontWeight.bold),
-          )
-        : null,
   );
 }
 

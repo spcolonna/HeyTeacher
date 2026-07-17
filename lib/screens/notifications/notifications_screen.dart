@@ -46,7 +46,7 @@ class NotificationsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.notifications_none,
-                      size: 72, color: Colors.grey.shade300),
+                      size: 72, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
                   Text('No notifications yet',
                       style: TextStyle(
@@ -64,7 +64,7 @@ class NotificationsScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: docs.length,
             separatorBuilder: (_, __) =>
-                Divider(height: 1, color: Colors.grey.shade100),
+                Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
             itemBuilder: (context, index) {
               final doc = docs[index];
               final data = doc.data() as Map<String, dynamic>;

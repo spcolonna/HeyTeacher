@@ -1,7 +1,7 @@
 name: hey_teacher_app
 description: Platform for English teachers in Uruguay
 publish_to: 'none'
-version: 1.0.1+4
+version: 1.0.2+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -39,6 +39,8 @@ dependencies:
   image_picker: ^1.1.2
   url_launcher: ^6.2.2
   qr_flutter: ^4.1.0
+  gal: ^2.3.1
+  http: ^1.2.0
   
   # PDF/Image in-app preview
   webview_flutter: ^4.10.0

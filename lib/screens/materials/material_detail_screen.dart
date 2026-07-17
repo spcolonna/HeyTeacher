@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/teaching_material.dart';
 import '../../services/material_service.dart';
+import '../../theme/theme.dart';
+import '../../widgets/widgets.dart';
 
 class MaterialDetailScreen extends StatelessWidget {
   final TeachingMaterial material;
@@ -11,36 +15,75 @@ class MaterialDetailScreen extends StatelessWidget {
 
   Future<void> _downloadMaterial(BuildContext context) async {
     if (material.fileUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('No file available'), backgroundColor: Colors.red),
-      );
+      showAppSnack(context, 'No file available', type: AppSnackType.error);
       return;
     }
 
-    try {
-      // Increment download count
-      final MaterialService materialService = MaterialService();
-      await materialService.incrementDownloadCount(material.id);
+    final materialService = MaterialService();
+    await materialService.incrementDownloadCount(material.id);
+    if (!context.mounted) return;
 
-      // Open URL
+    if (_isImageFile()) {
+      await _saveImageToGallery(context);
+    } else {
+      await _openExternally(context);
+    }
+  }
+
+  // Images: fetch the bytes and save them straight to the device's
+  // Photos/Gallery — opening them in the browser doesn't download anything,
+  // it just displays the image (Safari/Chrome require a manual long-press).
+  Future<void> _saveImageToGallery(BuildContext context) async {
+    try {
+      final hasAccess = await Gal.hasAccess(toAlbum: true);
+      if (!hasAccess) {
+        final granted = await Gal.requestAccess(toAlbum: true);
+        if (!granted) {
+          if (context.mounted) {
+            showAppSnack(
+              context,
+              'Photo library access is required to save images',
+              type: AppSnackType.error,
+            );
+          }
+          return;
+        }
+      }
+
+      final response = await http.get(Uri.parse(material.fileUrl!));
+      if (response.statusCode != 200) {
+        throw Exception('Download failed (${response.statusCode})');
+      }
+
+      await Gal.putImageBytes(response.bodyBytes, album: 'HeyTeacher');
+
+      if (context.mounted) {
+        showAppSnack(context, 'Saved to Photos', type: AppSnackType.success);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        showAppSnack(context, 'Could not save image: $e',
+            type: AppSnackType.error);
+      }
+    }
+  }
+
+  // Non-image files (PDF/DOC/PPT): open externally so the user picks where
+  // to save it — auto-saving a document into the photo gallery makes no sense.
+  Future<void> _openExternally(BuildContext context) async {
+    try {
       final Uri url = Uri.parse(material.fileUrl!);
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Could not open file'),
-                backgroundColor: Colors.red),
-          );
+          showAppSnack(context, 'Could not open file',
+              type: AppSnackType.error);
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        showAppSnack(context, 'Error: $e', type: AppSnackType.error);
       }
     }
   }
@@ -149,7 +192,7 @@ class MaterialDetailScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.broken_image,
-                                    size: 48, color: Colors.grey.shade400),
+                                    size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                 const SizedBox(height: 8),
                                 Text(
                                   'Could not load image',
@@ -303,7 +346,7 @@ class MaterialDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.person,
-                            size: 16, color: Colors.grey.shade600),
+                            size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(
                           material.uploaderName,
@@ -330,18 +373,19 @@ class MaterialDetailScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   if (material.suitableFor.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Suitable for',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
+                      runSpacing: 8,
                       children: material.suitableFor.map((level) {
                         return Chip(
                           label: Text(level.toString().split('.').last),
-                          backgroundColor: Colors.blue.shade50,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary.softFill,
                         );
                       }).toList(),
                     ),
@@ -349,19 +393,16 @@ class MaterialDetailScreen extends StatelessWidget {
                   ],
 
                   if (material.tags.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Tags',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
+                      runSpacing: 8,
                       children: material.tags.map((tag) {
-                        return Chip(
-                          label: Text(tag),
-                          backgroundColor: Colors.grey.shade100,
-                        );
+                        return Chip(label: Text(tag));
                       }).toList(),
                     ),
                     const SizedBox(height: 20),
@@ -370,7 +411,7 @@ class MaterialDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       Icon(Icons.download,
-                          size: 16, color: Colors.grey.shade600),
+                          size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         '${material.downloadCount} downloads',
@@ -380,7 +421,7 @@ class MaterialDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 16),
                       Icon(Icons.calendar_today,
-                          size: 16, color: Colors.grey.shade600),
+                          size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         DateFormat('MMM dd, yyyy').format(material.uploadedAt),

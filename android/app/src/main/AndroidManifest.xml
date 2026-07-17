@@ -39,4 +39,14 @@
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
+
+    <!-- Android 11+ (API 30+) hides other apps by default for privacy.
+         url_launcher needs this to know a browser/viewer exists before it can
+         open material download links (canLaunchUrl otherwise always returns false). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
 </manifest>

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/benefit.dart';
 import '../../services/benefit_service.dart';
 import '../../widgets/widgets.dart';
+import '../../theme/theme.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -197,13 +198,13 @@ class BenefitCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.green.shade100,
+                        color: Theme.of(context).extension<AppDecor>()!.success.softFill,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         benefit.discount,
                         style: TextStyle(
-                          color: Colors.green.shade700,
+                          color: Theme.of(context).extension<AppDecor>()!.success,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),

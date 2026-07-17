@@ -1,5 +1,19 @@
 import 'package:flutter/animation.dart';
 
+/// Builds subtle fills from a semantic color (success/warning/primary…).
+///
+/// Never tint from a fixed light shade like `Colors.green.shade50`: that stays
+/// light in dark mode and the theme's light text becomes unreadable on it.
+/// Deriving the fill from a brightness-aware color keeps contrast in both
+/// themes — pair [softFill] with the base color itself as the text color.
+extension SoftTint on Color {
+  /// Background fill for callouts, badges and status banners.
+  Color get softFill => withValues(alpha: 0.12);
+
+  /// Border companion for [softFill].
+  Color get softBorder => withValues(alpha: 0.40);
+}
+
 /// Spacing scale — use instead of magic EdgeInsets/SizedBox numbers.
 abstract final class Spacing {
   static const double xs = 4;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../theme/theme.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -55,7 +56,7 @@ class HelpSupportScreen extends StatelessWidget {
           const Divider(),
           const _SectionHeader('Contact Us'),
           ListTile(
-            leading: const Icon(Icons.email, color: Colors.blue),
+            leading: Icon(Icons.email, color: Theme.of(context).extension<AppDecor>()!.info),
             title: const Text('Email Support'),
             subtitle: const Text(_supportEmail),
             trailing: const Icon(Icons.chevron_right),
@@ -65,27 +66,23 @@ class HelpSupportScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(20),
             child: Card(
-              color: Colors.blue.shade50,
+              color: Theme.of(context).extension<AppDecor>()!.info.softFill,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     Icon(Icons.help_outline,
-                        size: 48, color: Colors.blue.shade700),
+                        size: 48, color: Theme.of(context).extension<AppDecor>()!.info),
                     const SizedBox(height: 12),
                     Text(
                       'Need more help?',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade900,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Our support team is here to help you with any questions or issues.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
@@ -107,7 +104,7 @@ class HelpSupportScreen extends StatelessWidget {
               children: [
                 Text(
                   'HeyTeacher is developed by',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -122,8 +119,8 @@ class HelpSupportScreen extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           height: 48, width: 48,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey.shade200),
-                          child: Center(child: Text('SPC', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey.shade600))),
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: Theme.of(context).colorScheme.surfaceContainerHigh),
+                          child: Center(child: Text('SPC', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurfaceVariant))),
                         ),
                       ),
                     ),
@@ -131,8 +128,8 @@ class HelpSupportScreen extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('SPC', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.grey.shade700)),
-                        Text('v1.0.1', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                        Text('SPC', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                        Text('v1.0.1', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   ],
@@ -188,7 +185,7 @@ class _FAQTile extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Text(
             answer,
-            style: TextStyle(color: Colors.grey.shade700),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       ],

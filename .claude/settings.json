@@ -5,7 +5,8 @@
       "Bash(python3 -)",
       "Bash(dart format *)",
       "Bash(grep -rn \"color: Colors.white,$\" lib/screens --include=\"*.dart\")",
-      "Bash(awk -F: '{s+=$2} END {print s}')"
+      "Bash(awk -F: '{s+=$2} END {print s}')",
+      "Bash(awk -F: '$2>0 {s+=$2} END {print s\" TextStyle inline restantes\"}')"
     ]
   }
 }

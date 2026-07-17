@@ -7,6 +7,7 @@ import '../../widgets/widgets.dart';
 import '../../services/google_calendar_service.dart';
 import 'create_group_screen.dart';
 import 'group_detail_screen.dart';
+import '../../theme/theme.dart';
 
 class ClassroomScreen extends StatelessWidget {
   const ClassroomScreen({super.key});
@@ -118,13 +119,16 @@ class _GoogleAccountBannerState extends State<_GoogleAccountBanner> {
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: Theme.of(context).extension<AppDecor>()!.success.softFill,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.green.shade200),
+          border: Border.all(
+              color: Theme.of(context).extension<AppDecor>()!.success.softBorder),
         ),
         child: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 16),
+            Icon(Icons.check_circle,
+                color: Theme.of(context).extension<AppDecor>()!.success,
+                size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -158,9 +162,10 @@ class _GoogleAccountBannerState extends State<_GoogleAccountBanner> {
         margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.blue.shade50,
+          color: Theme.of(context).extension<AppDecor>()!.info.softFill,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.blue.shade200),
+          border: Border.all(
+              color: Theme.of(context).extension<AppDecor>()!.info.softBorder),
         ),
         child: Row(
           children: [

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/institution_staff.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/staff_service.dart';
+import '../../theme/theme.dart';
 
 class MyInstitutionsScreen extends StatelessWidget {
   const MyInstitutionsScreen({super.key});
@@ -39,7 +40,7 @@ class MyInstitutionsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.apartment_outlined,
-                      size: 72, color: Colors.grey.shade300),
+                      size: 72, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
                   Text('No institution associations yet',
                       style: TextStyle(
@@ -140,7 +141,7 @@ class _PendingCardState extends State<_PendingCard> {
         padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            _institutionIcon(),
+            _institutionIcon(context),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -159,7 +160,7 @@ class _PendingCardState extends State<_PendingCard> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: Theme.of(context).extension<AppDecor>()!.warning.softFill,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.orange.shade300),
               ),
@@ -221,7 +222,7 @@ class _ActiveCard extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            _institutionIcon(),
+            _institutionIcon(context),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -237,7 +238,7 @@ class _ActiveCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text('Active staff member',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.green.shade700)),
+                              fontSize: 12, color: Theme.of(context).extension<AppDecor>()!.success)),
                     ]),
                   ]),
             ),
@@ -251,7 +252,8 @@ class _ActiveCard extends StatelessWidget {
                   .map((l) => Chip(
                         label: Text(l,
                             style: const TextStyle(fontSize: 11)),
-                        backgroundColor: Colors.purple.shade50,
+                        backgroundColor:
+                            Theme.of(context).colorScheme.secondary.softFill,
                         side: BorderSide(color: Colors.purple.shade200),
                         materialTapTargetSize:
                             MaterialTapTargetSize.shrinkWrap,
@@ -279,12 +281,12 @@ class _HistoryCard extends StatelessWidget {
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(children: [
-          _institutionIcon(muted: true),
+          _institutionIcon(context, muted: true),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -309,16 +311,16 @@ class _HistoryCard extends StatelessWidget {
   }
 }
 
-Widget _institutionIcon({bool muted = false}) {
+Widget _institutionIcon(BuildContext context, {bool muted = false}) {
+  final scheme = Theme.of(context).colorScheme;
+  final accent = muted ? scheme.onSurfaceVariant : scheme.primary;
   return Container(
     width: 44,
     height: 44,
     decoration: BoxDecoration(
-      color: muted ? Colors.grey.shade200 : Colors.blue.shade50,
+      color: muted ? scheme.surfaceContainerHigh : accent.softFill,
       borderRadius: BorderRadius.circular(10),
     ),
-    child: Icon(Icons.apartment,
-        color: muted ? Colors.grey.shade400 : Colors.blue.shade600,
-        size: 24),
+    child: Icon(Icons.apartment, color: accent, size: 24),
   );
 }

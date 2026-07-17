@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/class_group.dart';
 import '../../services/google_calendar_service.dart';
 import '../../services/classroom_service.dart';
+import '../../theme/theme.dart';
 
 class CreateMeetingScreen extends StatefulWidget {
   final String groupId;
@@ -249,13 +250,15 @@ class _GoogleConnectedTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.green.shade50,
+        color: Theme.of(context).extension<AppDecor>()!.success.softFill,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.green.shade200),
+        border: Border.all(
+            color: Theme.of(context).extension<AppDecor>()!.success.softBorder),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 18),
+          Icon(Icons.check_circle,
+              color: Theme.of(context).extension<AppDecor>()!.success, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -281,13 +284,15 @@ class _GoogleConnectBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.orange.shade50,
+          color: Theme.of(context).extension<AppDecor>()!.warning.softFill,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.orange.shade200),
+          border: Border.all(
+              color: Theme.of(context).extension<AppDecor>()!.warning.softBorder),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 18),
+            Icon(Icons.warning_amber_rounded,
+                color: Theme.of(context).extension<AppDecor>()!.warning, size: 18),
             SizedBox(width: 8),
             Expanded(
               child: Text(

@@ -296,8 +296,13 @@ class MaterialCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 10),
                           ),
-                          backgroundColor: Colors.teal.shade50,
-                          side: BorderSide(color: Colors.teal.shade200),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.secondary.softFill,
+                          side: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondary
+                                  .softBorder),
                           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
                           padding: EdgeInsets.zero,
