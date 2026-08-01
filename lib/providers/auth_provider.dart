@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/app_user.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 export '../services/auth_service.dart' show SocialSignInResult, GoogleSignInResult;
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final NotificationService _notificationService = NotificationService();
 
   AppUser? _currentUser;
   bool _isLoading = false;
@@ -24,6 +26,8 @@ class AuthProvider extends ChangeNotifier {
     _authService.userStream.listen((User? firebaseUser) async {
       if (firebaseUser != null) {
         _currentUser = await _authService.getUserData(firebaseUser.uid);
+        // Attach this device's push token to the account that just signed in.
+        if (!kIsWeb) await _notificationService.syncToken();
       } else {
         _currentUser = null;
       }
@@ -91,6 +95,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _setLoading(true);
     try {
+      // Detach the push token first, so this device stops receiving pushes
+      // addressed to the account being signed out.
+      final uid = _currentUser?.uid;
+      if (uid != null && !kIsWeb) await _notificationService.clearToken(uid);
+
       await _authService.signOut();
       _currentUser = null;
     } catch (e) {

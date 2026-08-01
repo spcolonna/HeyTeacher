@@ -2,6 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Xcode rewrites this to `production` when exporting the App Store IPA
+	     (verified in the signed .ipa), so it stays `development` here for
+	     local device debugging. -->
 	<key>aps-environment</key>
 	<string>development</string>
 	<key>com.apple.developer.applesignin</key>

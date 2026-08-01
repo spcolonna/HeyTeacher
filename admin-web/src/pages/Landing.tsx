@@ -1,39 +1,6 @@
-const FEATURES = [
-  {
-    icon: '💼',
-    title: 'Bolsa de trabajo',
-    body: 'Encontrá vacantes de inglés filtradas por zona, turno y nivel, y postulate directamente con tu perfil profesional.',
-  },
-  {
-    icon: '📚',
-    title: "The Teacher's Toolbox",
-    body: 'Compartí y descargá lesson plans, flashcards, worksheets e icebreakers creados por la comunidad.',
-  },
-  {
-    icon: '🎓',
-    title: 'Aula virtual',
-    body: 'Organizá tus grupos y agendá clases con Google Meet, sincronizadas con tu calendario.',
-  },
-  {
-    icon: '🎁',
-    title: 'Beneficios exclusivos',
-    body: 'Descuentos de nuestros partners, canjeables desde la app con tu código QR.',
-  },
-]
-
-const FOR_TEACHERS = [
-  'Postulate a vacantes que encajen con tu perfil',
-  'Construí tu CV con certificaciones (FCE, CAE, TESOL, CELTA…)',
-  'Seguí el estado de cada postulación',
-  'Accedé a materiales de toda la comunidad',
-]
-
-const FOR_INSTITUTIONS = [
-  'Publicá vacantes y llegá a profes calificados',
-  'Revisá postulantes y sus perfiles completos',
-  'Gestioná tu equipo docente en un lugar',
-  'Construí el perfil de tu institución',
-]
+import AppShowcase from '../components/showcase/AppShowcase'
+import ApplicationFlow from '../components/ApplicationFlow'
+import StaffManagement from '../components/StaffManagement'
 
 export default function Landing() {
   return (
@@ -79,7 +46,7 @@ export default function Landing() {
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4" id="descargar">
             <a
-              href="https://apps.apple.com/app/heyteacher"
+              href="https://apps.apple.com/uy/app/heyteacher/id6759878731"
               className="rounded-xl bg-white px-6 py-3 font-semibold text-brand shadow-lg transition hover:bg-slate-50"
             >
                Descargar en el App Store
@@ -94,24 +61,17 @@ export default function Landing() {
       {/* Features */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="text-center text-3xl font-bold">Todo lo que necesitás</h2>
-        <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl border border-slate-100 p-6 shadow-sm">
-              <div className="text-3xl">{f.icon}</div>
-              <h3 className="mt-4 text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.body}</p>
-            </div>
-          ))}
+        <p className="mx-auto mt-3 max-w-xl text-center text-slate-500">
+          Un recorrido rápido por la app — tocá una tarjeta para saltar a esa pantalla.
+        </p>
+        <div className="mt-14">
+          <AppShowcase />
         </div>
       </section>
 
-      {/* Audiences */}
-      <section className="bg-slate-50 px-6 py-20">
-        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
-          <AudienceCard title="Para profesores" items={FOR_TEACHERS} />
-          <AudienceCard title="Para instituciones" items={FOR_INSTITUTIONS} />
-        </div>
-      </section>
+      <ApplicationFlow />
+
+      <StaffManagement />
 
       {/* CTA */}
       <section className="px-6 py-20 text-center">
@@ -121,7 +81,7 @@ export default function Landing() {
           paso en tu carrera docente.
         </p>
         <a
-          href="https://apps.apple.com/app/heyteacher"
+          href="https://apps.apple.com/uy/app/heyteacher/id6759878731"
           className="mt-8 inline-block rounded-xl bg-brand px-8 py-4 font-semibold text-white shadow-lg transition hover:bg-brand-dark"
         >
           Descargar HeyTeacher!
@@ -145,22 +105,6 @@ export default function Landing() {
           </nav>
         </div>
       </footer>
-    </div>
-  )
-}
-
-function AudienceCard({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div className="rounded-2xl bg-white p-8 shadow-sm">
-      <h3 className="text-xl font-bold text-brand">{title}</h3>
-      <ul className="mt-6 space-y-3">
-        {items.map((item) => (
-          <li key={item} className="flex gap-3 text-slate-700">
-            <span className="text-brand">✓</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   )
 }

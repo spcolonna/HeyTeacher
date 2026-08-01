@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'screens/splash_screen.dart';
@@ -18,6 +19,10 @@ void main() async {
 
   // Initialize notification service
   if (!kIsWeb) {
+    // Must be registered before runApp so notifications that arrive while
+    // the app is terminated are still handled.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     final notificationService = NotificationService();
     await notificationService.initialize();
   }

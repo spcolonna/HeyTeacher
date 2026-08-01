@@ -1,10 +1,14 @@
+import 'dart:io' show Platform;
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Initialize notifications
   Future<void> initialize() async {
     try {
@@ -17,24 +21,14 @@ class NotificationService {
       );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        print('User granted permission');
+        // Persist the token for whoever is signed in right now (on a cold
+        // start the auth listener in AuthProvider also calls syncToken()).
+        await syncToken();
 
-        // Get FCM token
-        try {
-          String? token = await _messaging.getToken();
-          if (token != null) {
-            print('FCM Token: $token');
-            // Save token to Firestore would happen here
-          }
-        } catch (e) {
-          print('⚠️ Could not get FCM token (normal on iOS simulator): $e');
-          // Continuar sin token - OK en simulador
-        }
-
-        // Listen for token refresh
+        // A refreshed token is useless unless it replaces the stored one.
         _messaging.onTokenRefresh.listen((newToken) async {
-          print('FCM Token refreshed: $newToken');
-          // Update token in Firestore
+          final uid = FirebaseAuth.instance.currentUser?.uid;
+          if (uid != null) await saveFCMToken(uid, newToken);
         });
 
         // Handle foreground messages
@@ -50,16 +44,51 @@ class NotificationService {
       // App continúa funcionando sin notificaciones
     }
   }
-  
+
+  /// Fetches the current FCM token and stores it on the signed-in user's
+  /// document. Safe to call repeatedly — call it on every sign-in, since a
+  /// token obtained before login would otherwise never be attached to anyone.
+  Future<void> syncToken() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    try {
+      // On iOS the FCM token is only available once APNs has handed us its
+      // own token; asking too early throws instead of returning null.
+      if (!kIsWeb && Platform.isIOS) {
+        final apnsToken = await _messaging.getAPNSToken();
+        if (apnsToken == null) return;
+      }
+
+      final token = await _messaging.getToken();
+      if (token != null) await saveFCMToken(uid, token);
+    } catch (e) {
+      // Expected on the iOS simulator, which has no APNs support.
+      print('⚠️ Could not get FCM token: $e');
+    }
+  }
+
   // Save FCM token to user document
   Future<void> saveFCMToken(String userId, String token) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
+      await _firestore.collection('users').doc(userId).set({
         'fcmToken': token,
         'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-      });
+      }, SetOptions(merge: true));
     } catch (e) {
       print('Error saving FCM token: $e');
+    }
+  }
+
+  /// Clears the stored token so a signed-out device stops receiving pushes
+  /// meant for that account.
+  Future<void> clearToken(String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'fcmToken': FieldValue.delete(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error clearing FCM token: $e');
     }
   }
   
@@ -169,7 +198,10 @@ class NotificationService {
   }
 }
 
-// Top-level function for background message handler
+// Top-level function for background message handler.
+// @pragma keeps it alive in release builds — without it tree-shaking strips
+// the entry point and background notifications silently stop working.
+@pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling background message: ${message.messageId}');
 }

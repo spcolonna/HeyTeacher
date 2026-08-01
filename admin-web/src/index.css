@@ -3,3 +3,11 @@
 @tailwind utilities;
 
 html { scroll-behavior: smooth; }
+
+@keyframes showcase-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-showcase-fade {
+  animation: showcase-fade 420ms ease-out;
+}
